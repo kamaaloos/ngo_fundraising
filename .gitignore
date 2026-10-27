@@ -12,3 +12,7 @@ htmlcov/
 *.sqlite3
 *.log
 web/downloads/*.exe
+installer/node_modules/
+installer/dist/
+installer/payload/
+installer/*.log

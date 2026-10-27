@@ -23,15 +23,43 @@ from app.widgets.chart_hover import enable_bar_hover, enable_line_hover
 from app.widgets.hover_frame import HoverFrame
 from app.widgets.stat_card import StatCard
 
-try:
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.figure import Figure
+FigureCanvas = None  # type: ignore
+Figure = None  # type: ignore
+HAS_MPL = False
+_MPL_IMPORT_ERROR = ""
 
-    HAS_MPL = True
-except Exception:
-    FigureCanvas = None  # type: ignore
-    Figure = None  # type: ignore
-    HAS_MPL = False
+
+def _ensure_matplotlib() -> bool:
+    """Lazy-import matplotlib after QApplication exists (required for QtAgg)."""
+    global FigureCanvas, Figure, HAS_MPL, _MPL_IMPORT_ERROR
+    if HAS_MPL and FigureCanvas is not None and Figure is not None:
+        return True
+    try:
+        from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as _Canvas
+        from matplotlib.figure import Figure as _Figure
+
+        FigureCanvas = _Canvas
+        Figure = _Figure
+        HAS_MPL = True
+        _MPL_IMPORT_ERROR = ""
+        return True
+    except Exception as exc:  # noqa: BLE001 — show in UI for frozen builds
+        FigureCanvas = None
+        Figure = None
+        HAS_MPL = False
+        _MPL_IMPORT_ERROR = f"{type(exc).__name__}: {exc}"
+        return False
+
+
+def _charts_unavailable_message(extra: str = "") -> str:
+    detail = _MPL_IMPORT_ERROR or "matplotlib could not be loaded"
+    base = (
+        "Charts are unavailable in this install.\n"
+        f"({detail})"
+    )
+    if extra:
+        return f"{base}\n{extra}"
+    return base
 
 # Distinct colors so each project is easy to tell apart on overall charts.
 PROJECT_COLORS = [
@@ -303,12 +331,11 @@ class ReportsPage(QWidget):
             ],
         )
 
-        if not HAS_MPL:
-            self.charts_layout.addWidget(
-                QLabel("Install matplotlib for charts: pip install matplotlib"),
-                0,
-                0,
-            )
+        if not _ensure_matplotlib():
+            note = QLabel(_charts_unavailable_message())
+            note.setObjectName("muted")
+            note.setWordWrap(True)
+            self.charts_layout.addWidget(note, 0, 0)
             return
 
         rows = stats["by_project"]
@@ -411,12 +438,13 @@ class ReportsPage(QWidget):
             ],
         )
 
-        if not HAS_MPL:
+        if not _ensure_matplotlib():
             note = QLabel(
-                "Install matplotlib for charts: pip install matplotlib\n"
-                f"Payment methods: {dict(stats['by_method'])}\n"
-                f"Statuses: {stats['by_status']}\n"
-                f"Expense categories: {dict(stats['by_category'])}"
+                _charts_unavailable_message(
+                    f"Payment methods: {dict(stats['by_method'])}\n"
+                    f"Statuses: {stats['by_status']}\n"
+                    f"Expense categories: {dict(stats['by_category'])}"
+                )
             )
             note.setObjectName("muted")
             note.setWordWrap(True)

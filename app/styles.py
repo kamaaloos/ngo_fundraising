@@ -501,7 +501,7 @@ QLabel#loginHeroBrand {
 
 QLabel#loginHeroTagline {
     color: #FFFFFF;
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
     line-height: 1.25;
 }
@@ -539,9 +539,18 @@ QLabel#loginEyebrow {
     letter-spacing: 1.2px;
 }
 
+QScrollArea#loginFormScroll {
+    background-color: #E8EEF6;
+    border: none;
+}
+
+QScrollArea#loginFormScroll > QWidget > QWidget {
+    background-color: #E8EEF6;
+}
+
 QLabel#loginTitle {
     color: #12233A;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 800;
 }
 
@@ -589,8 +598,8 @@ QWidget#loginInputShell {
     background-color: #FFFFFF;
     border: 1.5px solid #C9D6E5;
     border-radius: 12px;
-    min-height: 52px;
-    margin-top: 4px;
+    min-height: 44px;
+    margin-top: 2px;
     margin-bottom: 0px;
 }
 

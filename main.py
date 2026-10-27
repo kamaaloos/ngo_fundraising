@@ -5,6 +5,9 @@ import sys
 # Mute noisy Windows DirectWrite warnings for legacy bitmap fonts
 # (8514oem, Fixedsys, Modern, MS Sans Serif, MS Serif). Harmless.
 os.environ.setdefault("QT_LOGGING_RULES", "qt.qpa.fonts.warning=false")
+# Match local DPI behavior in frozen Windows builds.
+os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
+os.environ.setdefault("QT_SCALE_FACTOR_ROUNDING_POLICY", "PassThrough")
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
@@ -28,6 +31,13 @@ from app.support_identity import ensure_install_id
 def main():
     # Before QApplication: otherwise Windows keeps the python.exe taskbar icon.
     configure_windows_app_id()
+
+    try:
+        QApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+        )
+    except Exception:
+        pass
 
     app = QApplication(sys.argv)
     app.setFont(QFont("Segoe UI", 10))

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MayleSoft Installer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="fx-grid" aria-hidden="true"></div>
+    <div class="fx-orb fx-orb-a" aria-hidden="true"></div>
+    <div class="fx-orb fx-orb-b" aria-hidden="true"></div>
+    <div class="fx-scan" aria-hidden="true"></div>
+
+    <div class="shell">
+      <header class="titlebar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <strong>MayleSoft Installer</strong>
+            <small>Futuristic Windows Edition</small>
+          </div>
+        </div>
+        <div class="window-controls">
+          <button type="button" id="btn-min" title="Minimize">─</button>
+          <button type="button" id="btn-close" title="Close">✕</button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <!-- WELCOME -->
+        <section class="panel active" id="panel-welcome" data-panel="welcome">
+          <p class="eyebrow">System ready</p>
+          <h1>Install NGO Fundraising</h1>
+          <div class="slogan-stage" aria-live="polite">
+            <p class="slogan" id="slogan-text"></p>
+            <p class="slogan-sub" id="slogan-sub"></p>
+          </div>
+          <div class="dots" id="slogan-dots" aria-hidden="true"></div>
+          <div class="actions">
+            <button type="button" class="btn-primary" id="btn-begin">Begin installation</button>
+          </div>
+        </section>
+
+        <!-- PATH -->
+        <section class="panel" id="panel-path" data-panel="path">
+          <p class="eyebrow">Destination</p>
+          <h1>Choose install location</h1>
+          <p class="copy">
+            Files will be copied to this folder. You can keep the default MayleSoft path
+            or pick another directory.
+          </p>
+          <label class="field-label" for="install-path">Installation directory</label>
+          <div class="path-row">
+            <input id="install-path" type="text" spellcheck="false" />
+            <button type="button" class="btn-ghost" id="btn-browse">Browse…</button>
+          </div>
+          <div class="checks">
+            <label class="check">
+              <input type="checkbox" id="opt-desktop" checked />
+              <span>Create desktop shortcut</span>
+            </label>
+            <label class="check">
+              <input type="checkbox" id="opt-startmenu" checked />
+              <span>Create Start Menu shortcut</span>
+            </label>
+          </div>
+          <div class="actions split">
+            <button type="button" class="btn-ghost" id="btn-back-welcome">Back</button>
+            <button type="button" class="btn-primary" id="btn-install">Install</button>
+          </div>
+        </section>
+
+        <!-- PROGRESS -->
+        <section class="panel" id="panel-progress" data-panel="progress">
+          <p class="eyebrow">Deploying</p>
+          <h1>Installing application</h1>
+          <p class="copy" id="progress-status">Preparing files…</p>
+          <div class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="meter-fill" id="meter-fill"></div>
+            <div class="meter-glow"></div>
+          </div>
+          <div class="progress-meta">
+            <span id="progress-pct">0%</span>
+            <span id="progress-count">0 / 0 files</span>
+          </div>
+          <p class="file-line" id="progress-file">—</p>
+          <div class="actions">
+            <button type="button" class="btn-ghost danger" id="btn-cancel">Cancel</button>
+          </div>
+        </section>
+
+        <!-- DONE -->
+        <section class="panel" id="panel-done" data-panel="done">
+          <p class="eyebrow success">Complete</p>
+          <h1>Installation successful</h1>
+          <p class="copy">
+            NGO Fundraising is ready on this PC. Launch it now or finish and open it later
+            from the Start Menu.
+          </p>
+          <p class="path-done" id="done-path"></p>
+          <div class="actions split">
+            <button type="button" class="btn-ghost" id="btn-open-folder">Open folder</button>
+            <button type="button" class="btn-primary" id="btn-launch">Launch app</button>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn-ghost" id="btn-finish">Finish</button>
+          </div>
+        </section>
+
+        <!-- ERROR -->
+        <section class="panel" id="panel-error" data-panel="error">
+          <p class="eyebrow danger">Interrupted</p>
+          <h1>Installation failed</h1>
+          <p class="copy" id="error-message">Something went wrong.</p>
+          <div class="actions split">
+            <button type="button" class="btn-ghost" id="btn-error-close">Close</button>
+            <button type="button" class="btn-primary" id="btn-retry">Try again</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span id="footer-version">v1.0.0</span>
+        <span>© 2026 MayleSoft · Hasan Kamaal</span>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

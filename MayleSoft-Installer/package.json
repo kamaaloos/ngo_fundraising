@@ -1,0 +1,59 @@
+{
+  "name": "maylesoft-installer",
+  "productName": "MayleSoft Installer",
+  "version": "1.1.0",
+  "description": "MayleSoft Installer — Futuristic Windows Edition for NGO Fundraising",
+  "main": "main.js",
+  "author": "MayleSoft",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "sync-payload": "node scripts/sync-payload.js",
+    "start": "npm run sync-payload && electron .",
+    "start:welcome-test": "electron .",
+    "pack": "npm run sync-payload && electron-builder --win dir",
+    "dist": "npm run sync-payload && electron-builder --win"
+  },
+  "build": {
+    "appId": "com.maylesoft.ngofundraising.installer",
+    "productName": "MayleSoft Installer",
+    "copyright": "© 2026 MayleSoft",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "style.css",
+      "renderer.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "payload",
+        "to": "payload",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "MayleSoft-Installer-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "MayleSoft-Installer-${version}.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  }
+}

@@ -1,5 +1,10 @@
 Place the customer installer here before publishing the landing page:
 
-  NGOFundraising-Setup-1.0.0.exe
+  MayleSoft-Installer-1.1.0.exe
 
-packaging\build_windows.bat copies it automatically after a successful build.
+Build it with:
+
+  installer\build_installer.bat
+
+Do not ship NGOFundraising-Setup-*.exe as the download — that opens a separate
+Inno Setup window. MayleSoft Installer installs the app inside its own UI.

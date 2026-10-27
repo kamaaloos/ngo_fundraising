@@ -11,6 +11,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QColor, QPainter, QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QDialog,
     QFrame,
     QGraphicsOpacityEffect,
@@ -20,6 +21,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -36,6 +38,7 @@ from app.db.repository import (
 from app.db.seed import DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME
 from app.licensing import get_license_status
 from app.support_identity import SUPPORT_CONTACT, SUPPORT_EMAIL, get_install_id
+from app.windowing import fit_window
 from app.widgets.password_edit import IconLineEdit
 
 HERO_PATH = Path(__file__).resolve().parent.parent / "assets" / "login_hero.jpg"
@@ -71,7 +74,7 @@ class HeroPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("loginHero")
-        self.setMinimumWidth(380)
+        self.setMinimumWidth(280)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._pixmap = QPixmap(str(HERO_PATH)) if HERO_PATH.exists() else QPixmap()
 
@@ -84,32 +87,33 @@ class HeroPanel(QWidget):
         self._slide_index = 0
         self._swap_busy = False
 
-        overlay = QVBoxLayout(self)
-        overlay.setContentsMargins(40, 48, 40, 48)
-        overlay.addStretch(3)
+        self._overlay = QVBoxLayout(self)
+        self._overlay.setContentsMargins(28, 28, 28, 24)
+        self._overlay.setSpacing(8)
+        self._overlay.addStretch(2)
 
-        self.brand = logo_label(220, 160, object_name="loginHeroLogo")
-        overlay.addWidget(self.brand, 0, Qt.AlignmentFlag.AlignLeft)
+        self.brand = logo_label(180, 120, object_name="loginHeroLogo")
+        self._overlay.addWidget(self.brand, 0, Qt.AlignmentFlag.AlignLeft)
 
         first_tagline, first_caption = HERO_SLIDES[0]
         self.tagline = QLabel(first_tagline)
         self.tagline.setObjectName("loginHeroTagline")
         self.tagline.setWordWrap(True)
-        self.tagline.setMinimumHeight(86)
-        overlay.addWidget(self.tagline)
+        self.tagline.setMinimumHeight(0)
+        self._overlay.addWidget(self.tagline)
 
         self.caption = QLabel(first_caption)
         self.caption.setObjectName("loginHeroCaption")
         self.caption.setWordWrap(True)
-        self.caption.setMinimumHeight(36)
-        overlay.addWidget(self.caption)
-        overlay.addStretch(1)
+        self.caption.setMinimumHeight(0)
+        self._overlay.addWidget(self.caption)
+        self._overlay.addStretch(1)
 
         self.hero_copyright = copyright_label(object_name="loginHeroCopyright")
         self.hero_copyright.setAlignment(
             Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom
         )
-        overlay.addWidget(self.hero_copyright)
+        self._overlay.addWidget(self.hero_copyright)
 
         for label in (self.brand, self.tagline, self.caption, self.hero_copyright):
             fx = QGraphicsOpacityEffect(label)
@@ -350,10 +354,20 @@ class LoginDialog(QDialog):
         self.setWindowIcon(app_icon())
         self._titlebar_themed = False
         self.setModal(True)
-        self.setMinimumSize(980, 620)
-        self.resize(1100, 700)
         self.setObjectName("loginDialog")
         self.user = None
+        self._compact = False
+        self._hero_intro_done = False
+
+        # Compact default — same as local main.py; also safe for packaged installs.
+        fit_window(
+            self,
+            prefer_width=960,
+            prefer_height=600,
+            min_width=720,
+            min_height=480,
+            height_ratio=0.88,
+        )
 
         root = QHBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -364,17 +378,36 @@ class LoginDialog(QDialog):
 
         right = QWidget()
         right.setObjectName("loginRightPane")
-        right_layout = QVBoxLayout(right)
-        right_layout.setContentsMargins(48, 40, 48, 40)
+        right_outer = QVBoxLayout(right)
+        right_outer.setContentsMargins(0, 0, 0, 0)
+        right_outer.setSpacing(0)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("loginFormScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        scroll_body = QWidget()
+        scroll_body.setObjectName("loginRightPane")
+        right_layout = QVBoxLayout(scroll_body)
+        self._right_layout = right_layout
+        right_layout.setContentsMargins(36, 28, 36, 24)
+        right_layout.setSpacing(10)
         right_layout.addStretch(1)
 
         self.form_card = LoginFormCard()
+        self.form_card.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum
+        )
         form_layout = QVBoxLayout(self.form_card)
-        form_layout.setContentsMargins(36, 34, 36, 32)
-        form_layout.setSpacing(14)
+        self._form_layout = form_layout
+        form_layout.setContentsMargins(28, 24, 28, 22)
+        form_layout.setSpacing(10)
 
-        form_logo = logo_label(150, 110, object_name="loginFormLogo")
-        form_layout.addWidget(form_logo, 0, Qt.AlignmentFlag.AlignLeft)
+        self.form_logo = logo_label(120, 84, object_name="loginFormLogo")
+        form_layout.addWidget(self.form_logo, 0, Qt.AlignmentFlag.AlignLeft)
 
         eyebrow = QLabel("SECURE ACCESS")
         eyebrow.setObjectName("loginEyebrow")
@@ -390,24 +423,24 @@ class LoginDialog(QDialog):
         subtitle.setObjectName("loginSubtitle")
         subtitle.setWordWrap(True)
         form_layout.addWidget(subtitle)
-        form_layout.addSpacing(10)
 
         user_label = QLabel("Username")
         user_label.setObjectName("loginFieldLabel")
         form_layout.addWidget(user_label)
         self.username = IconLineEdit("Enter your username", leading="👤")
+        self.username.setMinimumHeight(44)
         form_layout.addWidget(self.username)
 
         pass_label = QLabel("Password")
         pass_label.setObjectName("loginFieldLabel")
         form_layout.addWidget(pass_label)
         self.password = IconLineEdit("Enter your password", leading="🔒", password=True)
+        self.password.setMinimumHeight(44)
         form_layout.addWidget(self.password)
 
-        form_layout.addSpacing(8)
         login_btn = QPushButton("Sign in")
         login_btn.setObjectName("loginPrimary")
-        login_btn.setMinimumHeight(48)
+        login_btn.setMinimumHeight(44)
         login_btn.clicked.connect(self._try_login)
         form_layout.addWidget(login_btn)
 
@@ -434,11 +467,11 @@ class LoginDialog(QDialog):
         form_layout.addWidget(license_link, 0, Qt.AlignmentFlag.AlignCenter)
 
         right_layout.addWidget(self.form_card)
-        right_layout.addSpacing(16)
         right_layout.addWidget(copyright_label(object_name="loginCopyright"))
         self.install_label = QLabel(f"Install ID: {get_install_id()}")
         self.install_label.setObjectName("loginInstallId")
         self.install_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.install_label.setWordWrap(True)
         self.install_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
@@ -450,6 +483,9 @@ class LoginDialog(QDialog):
         right_layout.addWidget(self.license_label)
         self._refresh_license_label()
         right_layout.addStretch(1)
+
+        scroll.setWidget(scroll_body)
+        right_outer.addWidget(scroll, 1)
         root.addWidget(right, 4)
 
         self.password.edit.returnPressed.connect(self._try_login)
@@ -460,35 +496,77 @@ class LoginDialog(QDialog):
         QTimer.singleShot(50, self._play_cinematic)
 
     def _play_cinematic(self):
-        target_hero = max(460, int(self.width() * 0.56))
+        self._apply_responsive_layout()
+        hero_share = 0.52 if self.width() >= 900 else 0.42
+        target_hero = max(260, int(self.width() * hero_share))
+        if self.width() < 820:
+            target_hero = max(220, int(self.width() * 0.36))
 
         fade = QPropertyAnimation(self, b"windowOpacity", self)
-        fade.setDuration(650)
+        fade.setDuration(500)
         fade.setStartValue(0.0)
         fade.setEndValue(1.0)
         fade.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        # Very visible left reveal
         reveal = QPropertyAnimation(self.hero, b"maximumWidth", self)
-        reveal.setDuration(1100)
+        reveal.setDuration(900)
         reveal.setStartValue(0)
         reveal.setEndValue(target_hero)
-        reveal.setEasingCurve(QEasingCurve.Type.OutBack)
+        reveal.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         group = QParallelAnimationGroup(self)
         group.addAnimation(fade)
         group.addAnimation(reveal)
 
         def finish():
+            self._hero_intro_done = True
             self.hero.setMaximumWidth(16777215)
+            self._apply_responsive_layout()
             self.hero.start_cinematic()
 
         group.finished.connect(finish)
         self._intro = group
         group.start()
 
+    def _apply_responsive_layout(self):
+        """Tighten paddings / hide hero on short or narrow screens."""
+        h = max(1, self.height())
+        w = max(1, self.width())
+        compact = h < 640 or w < 900
+        self._compact = compact
+
+        if compact:
+            self._right_layout.setContentsMargins(20, 16, 20, 14)
+            self._form_layout.setContentsMargins(18, 16, 18, 14)
+            self._form_layout.setSpacing(8)
+            self.hero._overlay.setContentsMargins(18, 18, 18, 14)
+            self.form_logo.setMaximumHeight(64)
+            self.hero.brand.setMaximumHeight(72)
+            self.username.setMinimumHeight(40)
+            self.password.setMinimumHeight(40)
+        else:
+            self._right_layout.setContentsMargins(36, 28, 36, 24)
+            self._form_layout.setContentsMargins(28, 24, 28, 22)
+            self._form_layout.setSpacing(10)
+            self.hero._overlay.setContentsMargins(28, 28, 28, 24)
+            self.form_logo.setMaximumHeight(96)
+            self.hero.brand.setMaximumHeight(130)
+            self.username.setMinimumHeight(44)
+            self.password.setMinimumHeight(44)
+
+        # On very narrow windows, collapse the hero so the form stays usable.
+        if self._hero_intro_done:
+            if w < 780:
+                self.hero.setMaximumWidth(0)
+                self.hero.hide()
+            else:
+                self.hero.show()
+                self.hero.setMaximumWidth(16777215)
+                self.hero.setMinimumWidth(240 if compact else 280)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
+        self._apply_responsive_layout()
         self.hero.update()
 
     def showEvent(self, event):
@@ -501,6 +579,16 @@ class LoginDialog(QDialog):
                 dark=settings.mode_key() == "night",
                 caption_hex=THEME_PRESETS[settings.accent_key()]["accent"],
             )
+            # Packaged builds need a second fit after native chrome exists.
+            fit_window(
+                self,
+                prefer_width=960,
+                prefer_height=600,
+                min_width=720,
+                min_height=480,
+                height_ratio=0.88,
+            )
+        self._apply_responsive_layout()
 
     def shutdown(self):
         """Stop timers/animations so the process can exit cleanly."""

@@ -56,17 +56,24 @@ python scripts/seed_demo.py
 
 ### Customer Windows build
 
-Requires [Inno Setup 6](https://jrsoftware.org/isdl.php) for the installer (optional; folder build still works without it).
+**1. Build the desktop app payload**
 
 ```bat
 packaging\build_windows.bat
 ```
 
-Outputs:
+Creates `dist\NGOFundraising\` (and optionally the older Inno Setup exe if Inno is installed).
 
-- `dist\NGOFundraising-Setup-1.0.0.exe` — ship this to customers  
-- `dist\NGOFundraising\` — portable folder (also used by the installer)
-- `web\downloads\…` — installer copied for the download landing page
+**2. Build the MayleSoft futuristic installer (recommended)**
+
+```bat
+cd installer
+npm install
+npm run dist
+```
+
+Ship: `installer\dist\MayleSoft-Installer-1.1.0.exe`  
+See `installer\README.md` for UI preview (`npm start`) and payload replacement.
 
 ### Download landing page
 

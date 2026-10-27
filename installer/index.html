@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self'; script-src 'self'"
+    />
+    <title>MayleSoft Installer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+    <div class="gridlines"></div>
+    <div class="particles" id="particles"></div>
+
+    <header>
+      <div class="brand">
+        <span class="mark">M</span>
+        <span>MAYLESOFT <small>INSTALLER</small></span>
+      </div>
+      <div class="window-buttons">
+        <button id="minimize" aria-label="Minimize">—</button>
+        <button id="close" aria-label="Close">×</button>
+      </div>
+    </header>
+
+    <main>
+      <aside>
+        <div class="side-label">SYSTEM SETUP / 01</div>
+        <div class="orb">
+          <div class="orb-core">M</div>
+          <div class="ring ring-one"></div>
+          <div class="ring ring-two"></div>
+        </div>
+        <div class="tagline">NEXT-GEN SOFTWARE</div>
+        <h2>Designed for<br /><em>what's next.</em></h2>
+        <p class="side-copy">NGO Fundraising installs inside this window — no separate setup dialog.</p>
+        <div class="signal">
+          <span class="signal-dot"></span> SYSTEM READY
+          <span class="signal-line"></span> V 1.1
+        </div>
+      </aside>
+
+      <section class="panel">
+        <div class="step-track">
+          <span id="step1" class="active">01 WELCOME</span><i></i>
+          <span id="step2">02 INSTALL</span><i></i>
+          <span id="step3">03 COMPLETE</span>
+        </div>
+
+        <div id="welcome" class="screen active">
+          <div class="eyebrow">WELCOME TO THE FUTURE</div>
+          <h1>Install <span>NGO Fundraising.</span></h1>
+          <p class="lead">Desktop fundraising for NGOs — donors, gifts, expenses, and reports. Built by MayleSoft.</p>
+          <div class="slogan-card">
+            <div class="slogan-label"><span class="pulse"></span> OUR VISION</div>
+            <div id="slogan" class="slogan">Sadaqah with clarity. Every gift accounted.</div>
+            <div class="slogan-dots"><b class="on"></b><b></b><b></b></div>
+          </div>
+          <div class="feature-list">
+            <div>✦ &nbsp; Installs NGO Fundraising.exe in this window</div>
+            <div>✦ &nbsp; Desktop &amp; Start Menu shortcuts</div>
+            <div>✦ &nbsp; Built for Windows 10/11</div>
+          </div>
+          <button class="primary" id="next">Get started <span>→</span></button>
+        </div>
+
+        <div id="configure" class="screen">
+          <div class="eyebrow">MAKE IT YOURS</div>
+          <h1>Choose <span>destination.</span></h1>
+          <p class="lead">Files are copied here by MayleSoft Installer — no second setup window.</p>
+          <div class="field-label">INSTALLATION DIRECTORY</div>
+          <div class="directory-row">
+            <input id="install-path" type="text" spellcheck="false" />
+            <button id="browse" class="secondary" type="button">Browse…</button>
+          </div>
+          <div class="slogan-card" id="reinstall-note" hidden>
+            <div class="slogan-label">REINSTALL</div>
+            <p id="reinstall-text">
+              An existing NGO Fundraising install was found. It will be uninstalled first,
+              then this version will be installed.
+            </p>
+          </div>
+          <label class="check-row"
+            ><input type="checkbox" id="opt-desktop" checked /> Create desktop shortcut</label
+          >
+          <label class="check-row"
+            ><input type="checkbox" id="opt-startmenu" checked /> Create Start Menu shortcut</label
+          >
+          <div class="footer-actions">
+            <button id="back" class="secondary" type="button">← Back</button>
+            <button id="begin" class="primary" type="button">Install now <span>→</span></button>
+          </div>
+        </div>
+
+        <div id="installing" class="screen">
+          <div class="eyebrow">SETTING THINGS IN MOTION</div>
+          <h1>Installing <span>NGO Fundraising.</span></h1>
+          <p class="lead">Copying application files into your chosen folder.</p>
+          <div class="progress-ring">
+            <svg viewBox="0 0 180 180">
+              <circle cx="90" cy="90" r="74" class="track" />
+              <circle cx="90" cy="90" r="74" class="fill" id="progress-circle" />
+            </svg>
+            <div id="percentage">0%</div>
+          </div>
+          <div class="progress-text" id="status">Preparing…</div>
+          <div class="thin-track"><div id="bar"></div></div>
+          <div class="install-slogan" id="install-slogan">Sadaqah with clarity. Every gift accounted.</div>
+        </div>
+
+        <div id="complete" class="screen">
+          <div class="eyebrow">MISSION ACCOMPLISHED</div>
+          <div class="checkmark">✓</div>
+          <h1>You're <span>all set.</span></h1>
+          <p class="lead">NGO Fundraising is installed. Launch it to sign in and start managing projects.</p>
+          <div class="success-note" id="done-path">✓ &nbsp; Installation complete</div>
+          <div class="footer-actions">
+            <button class="secondary" id="open-folder" type="button">Open folder</button>
+            <button class="primary" id="launch" type="button">Launch app <span>→</span></button>
+          </div>
+          <div class="footer-actions">
+            <button class="secondary" id="finish" type="button">Finish</button>
+          </div>
+        </div>
+
+        <div id="failure" class="screen">
+          <div class="eyebrow">INSTALLATION INTERRUPTED</div>
+          <h1>Something <span>went wrong.</span></h1>
+          <p class="lead" id="error-message"></p>
+          <button class="primary" id="retry" type="button">Try again →</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>© 2026 MAYLESOFT</span>
+      <span>BUILD THE EXTRAORDINARY <span class="footer-star">✦</span></span>
+    </footer>
+    <script src="renderer.js"></script>
+  </body>
+</html>

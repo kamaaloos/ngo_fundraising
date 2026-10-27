@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
+    QApplication,
     QHBoxLayout,
     QLabel,
     QMainWindow,
@@ -26,6 +27,7 @@ from app.pages.settings import SettingsPage
 from app.pages.users import UsersPage
 from app.settings_store import THEME_PRESETS, load_settings
 from app.styles import build_stylesheet
+from app.windowing import fit_window
 from app.widgets.sidebar import Sidebar
 
 
@@ -38,10 +40,10 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("NGO Fundraising")
         self.setWindowIcon(app_icon())
-        self.resize(1280, 800)
         self._ending = False
         self._to_login = False
         self._frame_theme_applied = False
+        self._fit_to_screen()
 
         root = QWidget()
         root_layout = QHBoxLayout(root)
@@ -153,12 +155,25 @@ class MainWindow(QMainWindow):
         caption = accent if dark else accent
         apply_windows_titlebar_theme(self, dark=dark, caption_hex=caption)
 
+    def _fit_to_screen(self):
+        """Open within the usable desktop area (avoids taskbar overflow)."""
+        fit_window(
+            self,
+            prefer_width=1180,
+            prefer_height=700,
+            min_width=900,
+            min_height=560,
+            height_ratio=0.90,
+        )
+
     def showEvent(self, event):
         super().showEvent(event)
         if not self._frame_theme_applied:
             self._frame_theme_applied = True
             # winId is valid after the native window exists.
             self._sync_windows_titlebar()
+            # Re-fit after native frame chrome is applied (packaged builds).
+            self._fit_to_screen()
 
     def _navigate(self, page_name: str):
         requires_project = {"Dashboard", "Donors", "Donations", "Expenses"}
