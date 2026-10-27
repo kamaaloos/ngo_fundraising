@@ -1,14 +1,16 @@
 """
-Reset the admin login password (local SQLite app).
+Offline emergency admin password reset (developer / support only).
 
 Preferred for customers: open the app → Sign in → "Forgot admin password?"
+and use the recovery key held by MayleSoft support.
 
-Developer / support usage (from the project folder, with venv active):
+This script bypasses the recovery key. It is intentionally awkward to run and
+is NOT included in the Windows customer build.
 
-    python scripts/reset_admin_password.py
-    python scripts/reset_admin_password.py --password MyNewPass123
+Usage (from the project folder, with venv active):
 
-Default temporary password is admin123; you will be forced to change it at login.
+    python scripts/reset_admin_password.py --confirm-offline-reset
+    python scripts/reset_admin_password.py --confirm-offline-reset --password MyNewPass123
 """
 
 from __future__ import annotations
@@ -28,7 +30,7 @@ from app.db.seed import DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Reset NGO Fund admin password")
+    parser = argparse.ArgumentParser(description="Emergency offline admin password reset")
     parser.add_argument(
         "--password",
         default=DEFAULT_ADMIN_PASSWORD,
@@ -39,7 +41,20 @@ def main() -> int:
         default=DEFAULT_ADMIN_USERNAME,
         help=f"Account to reset (default: {DEFAULT_ADMIN_USERNAME})",
     )
+    parser.add_argument(
+        "--confirm-offline-reset",
+        action="store_true",
+        help="Required. Confirms you are a trusted operator with project access.",
+    )
     args = parser.parse_args()
+
+    if not args.confirm_offline_reset:
+        print(
+            "Refusing to reset without --confirm-offline-reset.\n"
+            "Customers should use Sign in → Forgot admin password? with a recovery key.\n"
+            "Support/developers only: add --confirm-offline-reset."
+        )
+        return 2
 
     init_db()
     try:

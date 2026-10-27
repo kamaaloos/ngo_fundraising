@@ -11,3 +11,4 @@ dist/
 htmlcov/
 *.sqlite3
 *.log
+web/downloads/*.exe

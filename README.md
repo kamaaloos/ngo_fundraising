@@ -56,12 +56,27 @@ python scripts/seed_demo.py
 
 ### Customer Windows build
 
+Requires [Inno Setup 6](https://jrsoftware.org/isdl.php) for the installer (optional; folder build still works without it).
+
 ```bat
 packaging\build_windows.bat
 ```
 
-Output: `dist\NGOFundraising\NGOFundraising.exe`  
-Zip that folder for delivery. The frozen build never auto-seeds demo data.
+Outputs:
+
+- `dist\NGOFundraising-Setup-1.0.0.exe` — ship this to customers  
+- `dist\NGOFundraising\` — portable folder (also used by the installer)
+- `web\downloads\…` — installer copied for the download landing page
+
+### Download landing page
+
+Static site in `web/` (open `web/index.html` or host the `web` folder).
+
+```bat
+start web\index.html
+```
+
+The frozen build never auto-seeds demo data.
 
 Default admin (first launch only):
 
@@ -95,10 +110,10 @@ python scripts/customer_registry.py list
 
 Registry file (developer machine): `%LOCALAPPDATA%\MayleSoftSupport\customer_registry.json`
 
-**Emergency offline reset** (installer with project access, no recovery key on file):
+**Emergency offline reset** (support/developer only — not in customer builds):
 
 ```bat
-python scripts/reset_admin_password.py
+python scripts/reset_admin_password.py --confirm-offline-reset
 ```
 
 ### App license / usage timer
@@ -128,6 +143,9 @@ Stored at:
 Created automatically on first launch. Schema upgrades are **additive** (non-destructive).
 Before each upgrade the app writes a timestamped backup next to the database file
 (`fundraising_backup_YYYYMMDD_HHMMSS.sqlite3`).
+
+Admins can also **Export backup…** / **Restore from backup…** under Settings → Data backup
+(restore quits the app; reopen afterward).
 
 ## Tests
 

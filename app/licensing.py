@@ -156,28 +156,36 @@ def get_license_status() -> LicenseStatus:
             message="No license found. Contact MayleSoft support.",
         )
 
-    # Re-verify stored token when present
-    if token:
-        try:
-            tid, texp, _ = parse_license_code(token)
-            if tid != install_id or texp != expires:
-                return LicenseStatus(
-                    install_id=install_id,
-                    expires_on=expires,
-                    days_remaining=None,
-                    valid=False,
-                    is_trial=False,
-                    message="License data is corrupted. Contact MayleSoft support.",
-                )
-        except ValueError:
+    # Expiry alone is not enough — a signed token must match (blocks raw DB edits).
+    if not token:
+        return LicenseStatus(
+            install_id=install_id,
+            expires_on=expires,
+            days_remaining=None,
+            valid=False,
+            is_trial=False,
+            message="License signature missing. Enter a valid MayleSoft license code.",
+        )
+    try:
+        tid, texp, _ = parse_license_code(token)
+        if tid != install_id or texp != expires:
             return LicenseStatus(
                 install_id=install_id,
                 expires_on=expires,
                 days_remaining=None,
                 valid=False,
                 is_trial=False,
-                message="License signature invalid. Contact MayleSoft support.",
+                message="License data is corrupted. Contact MayleSoft support.",
             )
+    except ValueError:
+        return LicenseStatus(
+            install_id=install_id,
+            expires_on=expires,
+            days_remaining=None,
+            valid=False,
+            is_trial=False,
+            message="License signature invalid. Contact MayleSoft support.",
+        )
 
     remaining = (expires - today).days
     valid = remaining >= 0

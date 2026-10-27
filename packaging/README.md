@@ -1,11 +1,14 @@
 # Windows packaging
 
-Builds a folder-based PyInstaller distribution for customer PCs.
+Builds a PyInstaller app folder **and** a customer `Setup.exe` (Inno Setup).
 
 ## Prerequisites
 
 - Windows 10/11
-- Python 3.10+ with project `.venv` created and `requirements.txt` installed
+- Python 3.10+ with project `.venv` and `requirements.txt` installed
+- [Inno Setup 6](https://jrsoftware.org/isdl.php) (for the installer)
+
+If Inno Setup is missing, the bat still produces the portable folder under `dist\NGOFundraising\`.
 
 ## Build
 
@@ -15,18 +18,33 @@ From the repo root:
 packaging\build_windows.bat
 ```
 
-Output:
+Outputs:
 
 ```
-dist\NGOFundraising\NGOFundraising.exe
+dist\NGOFundraising\NGOFundraising.exe          ← portable folder
+dist\NGOFundraising-Setup-1.0.0.exe             ← customer installer
 ```
 
-Zip the entire `dist\NGOFundraising` folder for delivery. Customers run the `.exe`;
-they do not need Python installed.
+Ship the **Setup.exe** to customers. They run it, optionally create a desktop shortcut, and launch from the Start Menu.
+
+## What the installer does
+
+- Installs under `%LOCALAPPDATA%\MayleSoft\NGO Fundraising\` (no admin UAC by default)
+- Start Menu shortcut (+ optional desktop icon)
+- Launch after install
+- Uninstall via Windows Settings / Start Menu
+
+App data (database, license, recovery) stays in:
+
+```
+%LOCALAPPDATA%\NGOFundraisingManager\
+```
+
+Uninstalling the app does **not** delete that data folder (on purpose).
 
 ## Notes
 
 - Demo seed is forced off in the frozen build (`packaging/pyi_rth_ngo.py`).
-- App data still lives under `%LOCALAPPDATA%\NGOFundraisingManager\`.
 - Icon: `app/assets/app.ico`.
+- Bump `#define MyAppVersion` in `NGOFundraising.iss` when releasing.
 - Re-run the bat after dependency or asset changes.

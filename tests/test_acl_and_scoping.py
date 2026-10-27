@@ -10,9 +10,11 @@ from app.db.models import Donation, Donor, Project, User
 from app.db.repository import (
     get_project,
     global_dashboard_stats,
+    list_all_donors,
     list_donors,
     list_projects,
     save_donation,
+    save_donor,
     save_project,
 )
 
@@ -117,6 +119,38 @@ def test_donor_list_scoped_and_dashboard_counts(admin_session):
     assert stats["project_count"] == 1
     assert stats["donation_count"] == 1
     assert stats["donor_count"] == 1
+
+
+def test_list_all_donors_scoped_for_non_admin(admin_session):
+    p1, p2, limited_id = _make_user_project_fixture(admin_session)
+    other = save_donor(None, {"name": "Only Beta Donor", "email": "beta@example.org"})
+    save_donation(
+        None,
+        {
+            "donor_id": other,
+            "project_id": p2,
+            "pledged_amount": Decimal("25"),
+            "paid_amount": Decimal("25"),
+            "payment_method": "Cash",
+        },
+    )
+    unused = save_donor(None, {"name": "Unused Donor", "email": "new@example.org"})
+
+    admin_names = {d.name for d in list_all_donors()}
+    assert "Pat Donor" in admin_names
+    assert "Only Beta Donor" in admin_names
+    assert "Unused Donor" in admin_names
+
+    current_session.user_id = limited_id
+    current_session.username = "worker"
+    current_session.role = "user"
+    current_session.project_ids = [p1]
+
+    scoped = {d.name for d in list_all_donors()}
+    assert "Pat Donor" in scoped
+    assert "Unused Donor" in scoped
+    assert "Only Beta Donor" not in scoped
+    assert unused in {d.id for d in list_all_donors()}
 
 
 def test_sql_aggregates_on_project(admin_session):

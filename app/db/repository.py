@@ -434,10 +434,25 @@ def list_donors(
 
 
 def list_all_donors() -> list[Donor]:
-    """Donors available when recording a donation (authenticated)."""
+    """Donors available when recording a donation (authenticated).
+
+    Non-admins only see donors linked to an assigned project, plus unused
+    donors (no donations yet) so they can still record a first gift.
+    """
     require_auth()
+    allowed = accessible_project_ids()
     with SessionLocal() as session:
-        donors = session.scalars(select(Donor).order_by(Donor.name)).all()
+        query = select(Donor).order_by(Donor.name)
+        if allowed is not None:
+            unused = ~Donor.id.in_(select(Donation.donor_id).distinct())
+            if allowed:
+                linked = Donor.id.in_(
+                    select(Donation.donor_id).where(Donation.project_id.in_(allowed))
+                )
+                query = query.where(or_(unused, linked))
+            else:
+                query = query.where(unused)
+        donors = session.scalars(query).all()
         result = list(donors)
         for donor in result:
             session.expunge(donor)

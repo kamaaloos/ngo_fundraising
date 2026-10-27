@@ -1,10 +1,14 @@
-"""Appearance settings: theme color, day/night, organization logo."""
+"""Appearance settings: theme color, day/night, organization logo, backups."""
 
 from __future__ import annotations
+
+from datetime import datetime
+from pathlib import Path
 
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
+    QApplication,
     QButtonGroup,
     QFileDialog,
     QFormLayout,
@@ -18,6 +22,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.auth.session import current_session
+from app.db.database import (
+    APP_DIR,
+    DATABASE_PATH,
+    export_database_backup,
+    restore_database_backup,
+)
 from app.settings_store import (
     MODES,
     THEME_PRESETS,
@@ -155,6 +166,44 @@ class SettingsPage(QWidget):
         logo_layout.addLayout(preview_row)
         layout.addWidget(logo_card)
 
+        # ---- Data backup (admin) ----
+        backup_card = QFrame()
+        backup_card.setObjectName("panel")
+        backup_layout = QVBoxLayout(backup_card)
+        backup_layout.setContentsMargins(18, 16, 18, 16)
+        backup_heading = QLabel("Data backup")
+        backup_heading.setObjectName("sectionTitle")
+        backup_layout.addWidget(backup_heading)
+        self.backup_hint = QLabel(
+            "Export a copy of this computer’s database, or restore from a backup file. "
+            "Restore replaces current data and requires a restart."
+        )
+        self.backup_hint.setObjectName("muted")
+        self.backup_hint.setWordWrap(True)
+        backup_layout.addWidget(self.backup_hint)
+
+        self.db_path_label = QLabel("")
+        self.db_path_label.setObjectName("muted")
+        self.db_path_label.setWordWrap(True)
+        self.db_path_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        backup_layout.addWidget(self.db_path_label)
+
+        backup_row = QHBoxLayout()
+        self.export_backup_btn = QPushButton("Export backup…")
+        self.export_backup_btn.setObjectName("primaryButton")
+        self.export_backup_btn.clicked.connect(self._export_backup)
+        self.restore_backup_btn = QPushButton("Restore from backup…")
+        self.restore_backup_btn.setObjectName("ghostButton")
+        self.restore_backup_btn.clicked.connect(self._restore_backup)
+        backup_row.addWidget(self.export_backup_btn)
+        backup_row.addWidget(self.restore_backup_btn)
+        backup_row.addStretch()
+        backup_layout.addLayout(backup_row)
+        layout.addWidget(backup_card)
+        self.backup_card = backup_card
+
         # ---- About / install ----
         about = QFrame()
         about.setObjectName("panel")
@@ -187,6 +236,9 @@ class SettingsPage(QWidget):
             btn.setChecked(btn.property("mode_key") == settings.mode_key())
             btn.blockSignals(False)
         self._refresh_logo_preview()
+        is_admin = current_session.is_admin
+        self.backup_card.setVisible(is_admin)
+        self.db_path_label.setText(f"Database file: {DATABASE_PATH}")
 
     def _refresh_logo_preview(self):
         path = user_logo_path()
@@ -264,3 +316,66 @@ class SettingsPage(QWidget):
         clear_user_logo()
         self._refresh_logo_preview()
         self.appearance_changed.emit()
+
+    def _export_backup(self):
+        if not current_session.is_admin:
+            QMessageBox.warning(self, "Backup", "Administrator access required.")
+            return
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        suggested = str(Path.home() / "Documents" / f"NGO_Fundraising_backup_{stamp}.sqlite3")
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export database backup",
+            suggested,
+            "SQLite database (*.sqlite3 *.db);;All files (*.*)",
+        )
+        if not path:
+            return
+        try:
+            dest = export_database_backup(path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Backup failed", str(exc))
+            return
+        QMessageBox.information(
+            self,
+            "Backup saved",
+            f"Database copied to:\n{dest}\n\n"
+            f"Automatic migration backups also stay under:\n{APP_DIR}",
+        )
+
+    def _restore_backup(self):
+        if not current_session.is_admin:
+            QMessageBox.warning(self, "Restore", "Administrator access required.")
+            return
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Restore database from backup",
+            str(Path.home() / "Documents"),
+            "SQLite database (*.sqlite3 *.db);;All files (*.*)",
+        )
+        if not path:
+            return
+        confirm = QMessageBox.warning(
+            self,
+            "Restore database?",
+            "This replaces ALL data on this computer with the selected backup.\n\n"
+            "A safety copy of the current database is kept first. "
+            "The app will quit after restore — open it again to continue.\n\n"
+            "Continue?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel,
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            safety = restore_database_backup(path)
+        except Exception as exc:
+            QMessageBox.critical(self, "Restore failed", str(exc))
+            return
+        QMessageBox.information(
+            self,
+            "Restore complete",
+            f"Database restored.\n\nPrevious data saved as:\n{safety}\n\n"
+            "The application will now quit. Start it again to use the restored data.",
+        )
+        QApplication.instance().quit()

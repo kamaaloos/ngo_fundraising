@@ -153,13 +153,75 @@ def _column_exists(connection, table: str, column: str) -> bool:
 
 
 def backup_database() -> Path | None:
-    """Copy the live SQLite file before applying migrations."""
+    """Copy the live SQLite file before applying migrations (safe during init)."""
     if not DATABASE_PATH.exists():
         return None
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     dest = DATABASE_PATH.parent / f"fundraising_backup_{stamp}.sqlite3"
     shutil.copy2(DATABASE_PATH, dest)
     return dest
+
+
+def export_database_backup(dest: Path | str) -> Path:
+    """Write a consistent snapshot of the live database to ``dest`` (Settings UI)."""
+    import sqlite3
+
+    dest_path = Path(dest)
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    if dest_path.resolve() == DATABASE_PATH.resolve():
+        raise ValueError("Backup destination cannot be the live database file.")
+
+    # Checkpoint + online backup so WAL pages are included.
+    if engine is not None:
+        with engine.connect() as conn:
+            conn.execute(text("PRAGMA wal_checkpoint(TRUNCATE)"))
+            conn.commit()
+        engine.dispose()
+    try:
+        with sqlite3.connect(DATABASE_PATH.as_posix()) as src:
+            with sqlite3.connect(dest_path.as_posix()) as dst:
+                src.backup(dst)
+    finally:
+        configure_engine(DATABASE_PATH)
+    return dest_path
+
+
+def restore_database_backup(source: Path | str) -> Path:
+    """Replace the live database with ``source``. Caller should restart the app."""
+    import sqlite3
+
+    src_path = Path(source)
+    if not src_path.exists():
+        raise FileNotFoundError(f"Backup not found: {src_path}")
+    if src_path.resolve() == DATABASE_PATH.resolve():
+        raise ValueError("Cannot restore from the live database path.")
+
+    # Validate it looks like a SQLite database before replacing anything.
+    try:
+        with sqlite3.connect(src_path.as_posix()) as conn:
+            row = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchone()
+            if row is None:
+                raise ValueError("File is not a valid NGO Fundraising backup.")
+    except sqlite3.Error as exc:
+        raise ValueError(f"Invalid SQLite backup: {exc}") from exc
+
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safety = DATABASE_PATH.parent / f"fundraising_pre_restore_{stamp}.sqlite3"
+    if DATABASE_PATH.exists():
+        shutil.copy2(DATABASE_PATH, safety)
+
+    if engine is not None:
+        engine.dispose()
+
+    # Clear WAL sidecars so the restored file is the sole source of truth.
+    for suffix in ("-wal", "-shm"):
+        side = Path(str(DATABASE_PATH) + suffix)
+        if side.exists():
+            side.unlink()
+
+    shutil.copy2(src_path, DATABASE_PATH)
+    configure_engine(DATABASE_PATH)
+    return safety
 
 
 def _run_migrations(connection, current: int, target: int) -> None:
