@@ -18,3 +18,6 @@ installer/dist/
 installer/payload/
 installer/*.log
 .vercel
+.env
+.env.local
+.env.*.local

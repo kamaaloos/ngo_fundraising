@@ -1,7 +1,7 @@
 (() => {
-  const INSTALLER_PATH = "downloads/MayleSoft-Installer-1.1.0.exe";
-  const INSTALLER_NAME = "MayleSoft-Installer-1.1.0.exe";
-  const INSTALLER_VERSION = "1.1.0";
+  const LOCAL_INSTALLER_PATH = "downloads/MayleSoft-Installer-1.1.0.exe";
+  const DEFAULT_NAME = "MayleSoft-Installer-1.1.0.exe";
+  const DEFAULT_VERSION = "1.1.0";
 
   const header = document.querySelector(".site-header");
   const nav = document.querySelector("#site-nav");
@@ -14,6 +14,13 @@
     "(prefers-reduced-motion: reduce)"
   ).matches;
 
+  let installer = {
+    version: DEFAULT_VERSION,
+    fileName: DEFAULT_NAME,
+    href: LOCAL_INSTALLER_PATH,
+    viaBlob: false,
+  };
+
   const setStatus = (text, kind) => {
     if (!statusEl) return;
     statusEl.textContent = text;
@@ -21,10 +28,16 @@
     if (kind) statusEl.classList.add(kind);
   };
 
-  const setDownloadEnabled = (enabled) => {
+  const applyDownloadLinks = (enabled) => {
     downloadLinks.forEach((link) => {
-      link.setAttribute("href", INSTALLER_PATH);
-      link.setAttribute("download", INSTALLER_NAME);
+      link.setAttribute("href", installer.href);
+      if (installer.viaBlob) {
+        // Cross-origin Blob CDN: force attachment via ?download=1
+        link.removeAttribute("download");
+        link.setAttribute("rel", "noopener");
+      } else {
+        link.setAttribute("download", installer.fileName);
+      }
       if (enabled) {
         link.classList.remove("is-disabled");
         link.removeAttribute("aria-disabled");
@@ -37,15 +50,37 @@
     });
   };
 
+  const loadDownloadConfig = async () => {
+    try {
+      const res = await fetch("download-config.json", { cache: "no-store" });
+      if (!res.ok) return;
+      const cfg = await res.json();
+      const remote =
+        (cfg.downloadUrl || cfg.url || "").trim();
+      if (remote) {
+        installer = {
+          version: String(cfg.version || DEFAULT_VERSION),
+          fileName: String(cfg.fileName || DEFAULT_NAME),
+          href: remote,
+          viaBlob: /blob\.vercel-storage\.com/i.test(remote),
+        };
+      }
+    } catch (_err) {
+      // Keep local fallback.
+    }
+  };
+
   const verifyInstaller = async () => {
     metaEls.forEach((el) => {
-      el.textContent = `Windows 10 / 11 · MayleSoft Installer ${INSTALLER_VERSION} · 30-day trial`;
+      el.textContent = `Windows 10 / 11 · MayleSoft Installer ${installer.version} · 30-day trial`;
     });
 
     if (location.protocol === "file:") {
-      setDownloadEnabled(true);
+      applyDownloadLinks(true);
       setStatus(
-        `Local preview: cannot verify ${INSTALLER_NAME} over file://. Host this folder to confirm the file is served.`,
+        installer.viaBlob
+          ? `Using MayleSoft Blob URL for ${installer.fileName}. Open via http:// to verify.`
+          : `Local preview: prefer http:// host, or upload the installer to MayleSoft Blob (npm run upload:installer).`,
         "is-warn"
       );
       return;
@@ -53,17 +88,19 @@
 
     try {
       let verified = null;
-      const head = await fetch(INSTALLER_PATH, {
+      const head = await fetch(installer.href, {
         method: "HEAD",
         cache: "no-store",
+        mode: "cors",
       });
       if (head.ok) {
         verified = head;
       } else {
-        const ranged = await fetch(INSTALLER_PATH, {
+        const ranged = await fetch(installer.href, {
           method: "GET",
           headers: { Range: "bytes=0-0" },
           cache: "no-store",
+          mode: "cors",
         });
         if (!(ranged.ok || ranged.status === 206)) {
           throw new Error(`HTTP ${head.status}`);
@@ -84,16 +121,20 @@
         sizeHint = ` · ${(bytes / (1024 * 1024)).toFixed(0)} MB reported`;
       }
 
-      setDownloadEnabled(true);
+      applyDownloadLinks(true);
       setStatus(
-        `Installer verified on this site: ${INSTALLER_NAME}${sizeHint}.`,
+        installer.viaBlob
+          ? `Installer on MayleSoft Blob: ${installer.fileName}${sizeHint}.`
+          : `Installer verified: ${installer.fileName}${sizeHint}.`,
         "is-ok"
       );
     } catch (_err) {
-      setDownloadEnabled(false);
+      applyDownloadLinks(true);
       setStatus(
-        `${INSTALLER_NAME} is not available from this host yet. Place it in web/downloads/ before publishing.`,
-        "is-err"
+        installer.viaBlob
+          ? `Could not verify Blob URL yet. Check the MayleSoft store upload and CORS.`
+          : `${installer.fileName} not on this host. Upload to MayleSoft Blob: npm run upload:installer`,
+        "is-warn"
       );
     }
   };
@@ -267,6 +308,11 @@
     window.setInterval(tick, holdMs + swapMs);
   };
 
-  verifyInstaller();
+  loadDownloadConfig()
+    .then(() => verifyInstaller())
+    .catch(() => {
+      applyDownloadLinks(true);
+      verifyInstaller();
+    });
   startSloganRoll();
 })();

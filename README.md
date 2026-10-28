@@ -92,9 +92,19 @@ start web\index.html
 It does **not** run the PySide6 desktop app. After connecting the GitHub repo, redeploy;
 if Python is still detected, set **Project → Settings → Root Directory** to `web`.
 
-Installer `.exe` files under `web/downloads/` are gitignored (large). Host the installer
-on a file host / release asset and update the landing download URL, or upload the exe
-in the Vercel dashboard / CI after build.
+**Installer download (MayleSoft Blob store):** `.exe` files are gitignored. Upload to the
+project’s [Vercel Blob](https://vercel.com/docs/vercel-blob/public-storage) store, then
+commit the generated public URL config:
+
+```bat
+npm install
+rem Set BLOB_READ_WRITE_TOKEN from Vercel → Storage → MayleSoft Blob → .env.local
+npm run upload:installer
+git add web\download-config.json
+git commit -m "Point landing download at MayleSoft Blob installer"
+```
+
+Landing page reads `web/download-config.json` and links to the Blob CDN (`?download=1`).
 
 The frozen build never auto-seeds demo data.
 
