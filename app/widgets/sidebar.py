@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.branding import apply_user_logo, copyright_label, logo_label
+from app.i18n import tr
 
 
 class Sidebar(QFrame):
@@ -21,6 +22,9 @@ class Sidebar(QFrame):
         super().__init__()
         self.setObjectName("sidebar")
         self.setFixedWidth(248)
+        self._project_name: str | None = None
+        self._display_name = ""
+        self._role = ""
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 16, 14, 14)
@@ -51,7 +55,7 @@ class Sidebar(QFrame):
         self.user_label.setWordWrap(True)
         layout.addWidget(self.user_label)
 
-        self.project_label = QLabel("No project selected")
+        self.project_label = QLabel(tr("nav.no_project"))
         self.project_label.setObjectName("sidebarProject")
         self.project_label.setWordWrap(True)
         layout.addWidget(self.project_label)
@@ -81,24 +85,27 @@ class Sidebar(QFrame):
         layout.addWidget(scroll, 1)
 
         # ---- Footer (fixed) ----
-        logout = QPushButton("Log out")
-        logout.setObjectName("navButton")
-        logout.setMinimumHeight(40)
-        logout.setCursor(Qt.CursorShape.PointingHandCursor)
-        logout.clicked.connect(self.logout_requested.emit)
-        layout.addWidget(logout)
+        self.logout_btn = QPushButton(tr("nav.logout"))
+        self.logout_btn.setObjectName("navButton")
+        self.logout_btn.setMinimumHeight(40)
+        self.logout_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.logout_btn.clicked.connect(self.logout_requested.emit)
+        layout.addWidget(self.logout_btn)
 
         layout.addWidget(copyright_label(object_name="sidebarCopyright"))
 
     def set_user(self, display_name: str, role: str):
-        role_label = "ADMIN" if role == "admin" else "USER"
+        self._display_name = display_name
+        self._role = role
+        role_label = tr("role.admin") if role == "admin" else tr("role.user")
         self.user_label.setText(f"{display_name}\n{role_label}")
 
     def refresh_user_logo(self):
         apply_user_logo(self.user_logo, 140, 48)
 
     def set_project_name(self, name: str | None):
-        self.project_label.setText(name or "No project selected")
+        self._project_name = name
+        self.project_label.setText(name or tr("nav.no_project"))
 
     def set_pages(self, pages: list[tuple[str, str]]):
         """pages: list of (key, label) e.g. ('Dashboard', 'Dashboard')."""

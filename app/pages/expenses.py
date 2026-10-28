@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 
 from app.db.repository import delete_expense, list_expenses, save_expense
 from app.dialogs.expense_dialog import ExpenseDialog
+from app.i18n import tr
 from app.utils import money
 from app.widgets.table_page import fill_table, make_table, selected_id
 
@@ -35,7 +36,7 @@ class ExpensesPage(QWidget):
         layout.setSpacing(14)
 
         top = QHBoxLayout()
-        title = QLabel("Expenses")
+        title = QLabel(tr("expenses.title"))
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()

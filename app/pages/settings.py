@@ -1,4 +1,4 @@
-"""Appearance settings: theme color, day/night, organization logo, backups."""
+"""Appearance settings: language, theme, day/night, organization logo, backups."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
     QCheckBox,
+    QComboBox,
     QFileDialog,
     QFormLayout,
     QFrame,
@@ -32,8 +33,8 @@ from app.db.database import (
     export_database_backup,
     restore_database_backup,
 )
+from app.i18n import LANGUAGE_OPTIONS, restart_application, tr
 from app.settings_store import (
-    MODES,
     THEME_PRESETS,
     clear_user_logo,
     load_settings,
@@ -66,6 +67,7 @@ class SettingsPage(QWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("contentArea")
+        self._updating_language = False
 
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
@@ -85,27 +87,43 @@ class SettingsPage(QWidget):
         layout.setContentsMargins(28, 26, 28, 26)
         layout.setSpacing(16)
 
-        title = QLabel("Settings")
-        title.setObjectName("pageTitle")
-        layout.addWidget(title)
+        self.title_label = QLabel(tr("settings.title"))
+        self.title_label.setObjectName("pageTitle")
+        layout.addWidget(self.title_label)
 
-        note = _wrap_label(
-            "Personalize this computer’s look. Your organization logo appears in "
-            "the sidebar — the MayleSoft app icon stays unchanged."
-        )
-        layout.addWidget(note)
+        self.note_label = _wrap_label(tr("settings.note"))
+        layout.addWidget(self.note_label)
+
+        # ---- Language ----
+        lang_card = _panel()
+        lang_layout = QVBoxLayout(lang_card)
+        lang_layout.setContentsMargins(18, 16, 18, 16)
+        lang_layout.setSpacing(10)
+        self.lang_heading = QLabel(tr("settings.language"))
+        self.lang_heading.setObjectName("sectionTitle")
+        lang_layout.addWidget(self.lang_heading)
+        self.lang_hint = _wrap_label(tr("settings.language_hint"))
+        lang_layout.addWidget(self.lang_hint)
+
+        self.language_combo = QComboBox()
+        self.language_combo.setMinimumHeight(36)
+        self.language_combo.setMaximumWidth(280)
+        for code, label in LANGUAGE_OPTIONS:
+            self.language_combo.addItem(label, code)
+        self.language_combo.currentIndexChanged.connect(self._on_language_changed)
+        lang_layout.addWidget(self.language_combo)
+        layout.addWidget(lang_card)
 
         # ---- Theme color ----
         theme_card = _panel()
         theme_layout = QVBoxLayout(theme_card)
         theme_layout.setContentsMargins(18, 16, 18, 16)
         theme_layout.setSpacing(10)
-        theme_heading = QLabel("Theme color")
-        theme_heading.setObjectName("sectionTitle")
-        theme_layout.addWidget(theme_heading)
-        theme_layout.addWidget(
-            _wrap_label("Accent color for buttons, highlights, and navigation.")
-        )
+        self.theme_heading = QLabel(tr("settings.theme"))
+        self.theme_heading.setObjectName("sectionTitle")
+        theme_layout.addWidget(self.theme_heading)
+        self.theme_hint = _wrap_label(tr("settings.theme_hint"))
+        theme_layout.addWidget(self.theme_hint)
 
         self.theme_group = QButtonGroup(self)
         theme_row = QHBoxLayout()
@@ -136,18 +154,21 @@ class SettingsPage(QWidget):
         mode_layout = QVBoxLayout(mode_card)
         mode_layout.setContentsMargins(18, 16, 18, 16)
         mode_layout.setSpacing(10)
-        mode_heading = QLabel("Display mode")
-        mode_heading.setObjectName("sectionTitle")
-        mode_layout.addWidget(mode_heading)
-        mode_layout.addWidget(
-            _wrap_label("Day keeps a light workspace; Night uses a dark workspace.")
-        )
+        self.mode_heading = QLabel(tr("settings.mode"))
+        self.mode_heading.setObjectName("sectionTitle")
+        mode_layout.addWidget(self.mode_heading)
+        self.mode_hint = _wrap_label(tr("settings.mode_hint"))
+        mode_layout.addWidget(self.mode_hint)
 
         self.mode_group = QButtonGroup(self)
         mode_row = QHBoxLayout()
-        for key, label in MODES.items():
-            btn = QRadioButton(label)
+        for key, label_key in (
+            ("day", "settings.mode.day"),
+            ("night", "settings.mode.night"),
+        ):
+            btn = QRadioButton(tr(label_key))
             btn.setProperty("mode_key", key)
+            btn.setProperty("label_key", label_key)
             self.mode_group.addButton(btn)
             mode_row.addWidget(btn)
             btn.toggled.connect(self._on_mode_toggled)
@@ -160,18 +181,14 @@ class SettingsPage(QWidget):
         logo_layout = QVBoxLayout(logo_card)
         logo_layout.setContentsMargins(18, 16, 18, 16)
         logo_layout.setSpacing(10)
-        logo_heading = QLabel("Organization logo")
-        logo_heading.setObjectName("sectionTitle")
-        logo_layout.addWidget(logo_heading)
-        logo_layout.addWidget(
-            _wrap_label(
-                "Shown in the sidebar under your session. This is your logo — "
-                "not the NGO Fundraising app icon."
-            )
-        )
+        self.logo_heading = QLabel(tr("settings.logo"))
+        self.logo_heading.setObjectName("sectionTitle")
+        logo_layout.addWidget(self.logo_heading)
+        self.logo_hint = _wrap_label(tr("settings.logo_hint"))
+        logo_layout.addWidget(self.logo_hint)
 
         preview_row = QHBoxLayout()
-        self.logo_preview = QLabel("No organization logo")
+        self.logo_preview = QLabel(tr("settings.logo_none"))
         self.logo_preview.setObjectName("muted")
         self.logo_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.logo_preview.setFixedSize(160, 100)
@@ -184,14 +201,14 @@ class SettingsPage(QWidget):
         preview_row.addWidget(self.logo_preview)
 
         logo_actions = QVBoxLayout()
-        choose = QPushButton("Choose logo…")
-        choose.setObjectName("primaryButton")
-        choose.clicked.connect(self._choose_logo)
-        remove = QPushButton("Remove logo")
-        remove.setObjectName("ghostButton")
-        remove.clicked.connect(self._remove_logo)
-        logo_actions.addWidget(choose)
-        logo_actions.addWidget(remove)
+        self.choose_logo_btn = QPushButton(tr("settings.logo_choose"))
+        self.choose_logo_btn.setObjectName("primaryButton")
+        self.choose_logo_btn.clicked.connect(self._choose_logo)
+        self.remove_logo_btn = QPushButton(tr("settings.logo_remove"))
+        self.remove_logo_btn.setObjectName("ghostButton")
+        self.remove_logo_btn.clicked.connect(self._remove_logo)
+        logo_actions.addWidget(self.choose_logo_btn)
+        logo_actions.addWidget(self.remove_logo_btn)
         logo_actions.addStretch()
         preview_row.addLayout(logo_actions)
         preview_row.addStretch()
@@ -203,14 +220,10 @@ class SettingsPage(QWidget):
         backup_layout = QVBoxLayout(backup_card)
         backup_layout.setContentsMargins(18, 16, 18, 16)
         backup_layout.setSpacing(10)
-        backup_heading = QLabel("Data backup")
-        backup_heading.setObjectName("sectionTitle")
-        backup_layout.addWidget(backup_heading)
-        self.backup_hint = _wrap_label(
-            "This install stores data on this PC only — there is no shared multi-PC "
-            "database in this version. Export a copy regularly, or restore from a "
-            "backup file (restore replaces current data and requires a restart)."
-        )
+        self.backup_heading = QLabel(tr("settings.backup"))
+        self.backup_heading.setObjectName("sectionTitle")
+        backup_layout.addWidget(self.backup_heading)
+        self.backup_hint = _wrap_label(tr("settings.backup_hint"))
         backup_layout.addWidget(self.backup_hint)
 
         self.db_path_label = _wrap_label("")
@@ -219,18 +232,16 @@ class SettingsPage(QWidget):
         )
         backup_layout.addWidget(self.db_path_label)
 
-        self.backup_on_exit_cb = QCheckBox(
-            "Write a local backup when quitting the app"
-        )
+        self.backup_on_exit_cb = QCheckBox(tr("settings.backup_on_exit"))
         self.backup_on_exit_cb.setMinimumHeight(28)
         self.backup_on_exit_cb.toggled.connect(self._on_backup_on_exit_toggled)
         backup_layout.addWidget(self.backup_on_exit_cb)
 
         backup_row = QHBoxLayout()
-        self.export_backup_btn = QPushButton("Export backup…")
+        self.export_backup_btn = QPushButton(tr("settings.export_backup"))
         self.export_backup_btn.setObjectName("primaryButton")
         self.export_backup_btn.clicked.connect(self._export_backup)
-        self.restore_backup_btn = QPushButton("Restore from backup…")
+        self.restore_backup_btn = QPushButton(tr("settings.restore_backup"))
         self.restore_backup_btn.setObjectName("ghostButton")
         self.restore_backup_btn.clicked.connect(self._restore_backup)
         backup_row.addWidget(self.export_backup_btn)
@@ -246,17 +257,17 @@ class SettingsPage(QWidget):
         about_layout.setContentsMargins(18, 16, 18, 16)
         about_layout.setHorizontalSpacing(18)
         about_layout.setVerticalSpacing(10)
-        about_title = QLabel("About")
-        about_title.setObjectName("sectionTitle")
-        about_layout.addRow(about_title)
+        self.about_title = QLabel(tr("settings.about"))
+        self.about_title.setObjectName("sectionTitle")
+        about_layout.addRow(self.about_title)
         from app.branding import COPYRIGHT_TEXT
         from app.support_identity import SUPPORT_EMAIL, get_install_id
 
-        about_layout.addRow("Product", QLabel(COPYRIGHT_TEXT))
-        about_layout.addRow("Support email", QLabel(SUPPORT_EMAIL))
+        about_layout.addRow(tr("settings.product"), QLabel(COPYRIGHT_TEXT))
+        about_layout.addRow(tr("settings.support_email"), QLabel(SUPPORT_EMAIL))
         install = QLabel(get_install_id())
         install.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        about_layout.addRow("Install ID", install)
+        about_layout.addRow(tr("settings.install_id"), install)
         layout.addWidget(about)
 
         layout.addStretch(1)
@@ -265,12 +276,22 @@ class SettingsPage(QWidget):
 
     def refresh(self):
         settings = load_settings()
+        self._updating_language = True
+        idx = self.language_combo.findData(settings.language_key())
+        if idx < 0:
+            idx = 0
+        self.language_combo.setCurrentIndex(idx)
+        self._updating_language = False
+
         for btn in self.theme_group.buttons():
             btn.blockSignals(True)
             btn.setChecked(btn.property("theme_key") == settings.accent_key())
             btn.blockSignals(False)
         for btn in self.mode_group.buttons():
             btn.blockSignals(True)
+            label_key = btn.property("label_key")
+            if label_key:
+                btn.setText(tr(str(label_key)))
             btn.setChecked(btn.property("mode_key") == settings.mode_key())
             btn.blockSignals(False)
         self._refresh_logo_preview()
@@ -285,7 +306,7 @@ class SettingsPage(QWidget):
         path = user_logo_path()
         if path is None:
             self.logo_preview.setPixmap(QPixmap())
-            self.logo_preview.setText("No organization logo")
+            self.logo_preview.setText(tr("settings.logo_none"))
             return
         pix = QPixmap(str(path))
         if pix.isNull():
@@ -317,9 +338,28 @@ class SettingsPage(QWidget):
         settings = load_settings()
         settings.theme = self._selected_theme()
         settings.mode = self._selected_mode()
+        settings.language = str(
+            self.language_combo.currentData() or settings.language_key()
+        )
         settings.has_user_logo = user_logo_path() is not None
         save_settings(settings)
         self.appearance_changed.emit()
+
+    def _on_language_changed(self, _index: int):
+        if self._updating_language:
+            return
+        code = str(self.language_combo.currentData() or "en")
+        settings = load_settings()
+        if code == settings.language_key():
+            return
+        settings.language = code
+        settings.theme = self._selected_theme()
+        settings.mode = self._selected_mode()
+        save_settings(settings)
+        QMessageBox.information(
+            self, tr("settings.language"), tr("settings.language_restart")
+        )
+        restart_application()
 
     def _on_theme_toggled(self, checked: bool):
         if checked:

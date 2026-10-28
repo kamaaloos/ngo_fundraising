@@ -15,6 +15,7 @@ from app.auth.session import current_session
 from app.db.models import PROJECT_STATUSES
 from app.db.repository import delete_project, list_projects, save_project
 from app.dialogs.project_dialog import ProjectDialog
+from app.i18n import tr
 from app.io.importers import (
     import_projects_from_file,
     import_projects_with_donors_from_file,
@@ -40,7 +41,7 @@ class ProjectsPage(QWidget):
         layout.setSpacing(16)
 
         top = QHBoxLayout()
-        title = QLabel("Projects")
+        title = QLabel(tr("projects.title"))
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()

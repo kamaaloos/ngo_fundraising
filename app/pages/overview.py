@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 
 from app.auth.session import current_session
 from app.db.repository import global_dashboard_stats
+from app.i18n import tr
 from app.utils import money
 from app.widgets.stat_card import StatCard
 from app.widgets.table_page import fill_table, make_table
@@ -27,11 +28,11 @@ class OverviewPage(QWidget):
         layout.setContentsMargins(28, 26, 28, 26)
         layout.setSpacing(16)
 
-        title = QLabel("Overview")
+        title = QLabel(tr("overview.title"))
         title.setObjectName("pageTitle")
         layout.addWidget(title)
 
-        self.subtitle = QLabel("Your fundraising portfolio")
+        self.subtitle = QLabel(tr("overview.subtitle"))
         self.subtitle.setObjectName("muted")
         self.subtitle.setWordWrap(True)
         layout.addWidget(self.subtitle)
@@ -60,7 +61,7 @@ class OverviewPage(QWidget):
         ):
             self.cards.addWidget(card, 1)
 
-        section = QLabel("Projects")
+        section = QLabel(tr("overview.projects"))
         section.setObjectName("sectionTitle")
         layout.addWidget(section)
 

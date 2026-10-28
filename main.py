@@ -22,8 +22,10 @@ from app.dialogs.change_password_dialog import ChangePasswordDialog
 from app.dialogs.license_dialog import ensure_license_or_exit
 from app.dialogs.login_dialog import LoginDialog
 from app.dialogs.recovery_key_dialog import RecoveryKeyDialog
+from app.i18n import apply_language_to_app
 from app.licensing import get_license_status
 from app.main_window import MainWindow
+from app.settings_store import load_settings
 from app.styles import build_stylesheet
 from app.support_identity import ensure_install_id
 
@@ -44,7 +46,7 @@ def main():
     app.setStyleSheet(build_stylesheet())
     app.setApplicationName("NGO Fundraising")
     app.setOrganizationName("MayleSoft")
-    app.setApplicationDisplayName("NGO Fundraising")
+    apply_language_to_app(app, load_settings().language_key())
     icon = app_icon()
     app.setWindowIcon(icon)
     # Keep False only while a session can return to login; always quit() explicitly.

@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 from app.auth.session import current_session
 from app.db.repository import delete_user, list_projects, list_users, save_user
 from app.dialogs.user_dialog import UserDialog
+from app.i18n import tr
 from app.widgets.table_page import fill_table, make_table, selected_id
 
 
@@ -23,7 +24,7 @@ class UsersPage(QWidget):
         layout.setSpacing(14)
 
         top = QHBoxLayout()
-        title = QLabel("Users & access")
+        title = QLabel(tr("users.title"))
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()

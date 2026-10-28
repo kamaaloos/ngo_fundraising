@@ -1,4 +1,4 @@
-"""User appearance settings (theme, day/night, organization logo)."""
+"""User appearance settings (theme, day/night, language, organization logo)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.db.database import APP_DIR
+from app.i18n import LANG_EN, normalize_language
 
 SETTINGS_PATH = APP_DIR / "ui_settings.json"
 USER_LOGO_PATH = APP_DIR / "user_logo.png"
@@ -75,6 +76,7 @@ DEFAULT_BACKUP_REMINDER_DAYS = 7
 class UISettings:
     theme: str = "teal"
     mode: str = "day"
+    language: str = LANG_EN
     has_user_logo: bool = False
     backup_on_exit: bool = True
     backup_reminder_days: int = DEFAULT_BACKUP_REMINDER_DAYS
@@ -84,6 +86,9 @@ class UISettings:
 
     def mode_key(self) -> str:
         return self.mode if self.mode in MODES else "day"
+
+    def language_key(self) -> str:
+        return normalize_language(self.language)
 
 
 def load_settings() -> UISettings:
@@ -101,6 +106,7 @@ def load_settings() -> UISettings:
     return UISettings(
         theme=str(data.get("theme") or "teal"),
         mode=str(data.get("mode") or "day"),
+        language=normalize_language(data.get("language")),
         has_user_logo=USER_LOGO_PATH.exists(),
         backup_on_exit=bool(data.get("backup_on_exit", True)),
         backup_reminder_days=reminder_days,
@@ -112,6 +118,7 @@ def save_settings(settings: UISettings) -> None:
     payload = {
         "theme": settings.accent_key(),
         "mode": settings.mode_key(),
+        "language": settings.language_key(),
         "backup_on_exit": bool(settings.backup_on_exit),
         "backup_reminder_days": int(settings.backup_reminder_days),
     }

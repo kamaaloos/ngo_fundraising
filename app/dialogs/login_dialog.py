@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 
 from app.auth.session import current_session
 from app.branding import app_icon, apply_windows_titlebar_theme, copyright_label, logo_label
+from app.i18n import tr
 from app.settings_store import THEME_PRESETS, load_settings
 from app.db.repository import (
     authenticate,
@@ -350,7 +351,7 @@ class LoginFormCard(QFrame):
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Sign in — NGO Fundraising")
+        self.setWindowTitle(tr("login.title"))
         self.setWindowIcon(app_icon())
         self._titlebar_themed = False
         self.setModal(True)
@@ -409,57 +410,53 @@ class LoginDialog(QDialog):
         self.form_logo = logo_label(120, 84, object_name="loginFormLogo")
         form_layout.addWidget(self.form_logo, 0, Qt.AlignmentFlag.AlignLeft)
 
-        eyebrow = QLabel("SECURE ACCESS")
+        eyebrow = QLabel(tr("login.eyebrow"))
         eyebrow.setObjectName("loginEyebrow")
         form_layout.addWidget(eyebrow)
 
-        title = QLabel("Welcome back")
+        title = QLabel(tr("login.welcome"))
         title.setObjectName("loginTitle")
         form_layout.addWidget(title)
 
-        subtitle = QLabel(
-            "Sign in to manage Islamic fundraising projects, donors, and reports."
-        )
+        subtitle = QLabel(tr("login.subtitle"))
         subtitle.setObjectName("loginSubtitle")
         subtitle.setWordWrap(True)
         form_layout.addWidget(subtitle)
 
-        user_label = QLabel("Username")
+        user_label = QLabel(tr("login.username"))
         user_label.setObjectName("loginFieldLabel")
         form_layout.addWidget(user_label)
-        self.username = IconLineEdit("Enter your username", leading="👤")
+        self.username = IconLineEdit(tr("login.username_ph"), leading="👤")
         self.username.setMinimumHeight(44)
         form_layout.addWidget(self.username)
 
-        pass_label = QLabel("Password")
+        pass_label = QLabel(tr("login.password"))
         pass_label.setObjectName("loginFieldLabel")
         form_layout.addWidget(pass_label)
-        self.password = IconLineEdit("Enter your password", leading="🔒", password=True)
+        self.password = IconLineEdit(tr("login.password_ph"), leading="🔒", password=True)
         self.password.setMinimumHeight(44)
         form_layout.addWidget(self.password)
 
-        login_btn = QPushButton("Sign in")
+        login_btn = QPushButton(tr("login.sign_in"))
         login_btn.setObjectName("loginPrimary")
         login_btn.setMinimumHeight(44)
         login_btn.clicked.connect(self._try_login)
         form_layout.addWidget(login_btn)
 
-        hint = QLabel(
-            "First launch creates admin — you will be asked to change the password."
-        )
+        hint = QLabel(tr("login.hint"))
         hint.setObjectName("loginHint")
         hint.setWordWrap(True)
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         form_layout.addWidget(hint)
 
-        forgot = QPushButton("Forgot admin password? Contact support")
+        forgot = QPushButton(tr("login.forgot"))
         forgot.setObjectName("loginForgotLink")
         forgot.setCursor(Qt.CursorShape.PointingHandCursor)
         forgot.setFlat(True)
         forgot.clicked.connect(self._reset_admin_password)
         form_layout.addWidget(forgot, 0, Qt.AlignmentFlag.AlignCenter)
 
-        license_link = QPushButton("Enter / renew license code")
+        license_link = QPushButton(tr("login.license"))
         license_link.setObjectName("loginForgotLink")
         license_link.setCursor(Qt.CursorShape.PointingHandCursor)
         license_link.setFlat(True)
@@ -696,13 +693,13 @@ class LoginDialog(QDialog):
         username = self.username.text().strip()
         password = self.password.text()
         if not username or not password:
-            QMessageBox.warning(self, "Sign in", "Enter username and password.")
+            QMessageBox.warning(self, tr("login.sign_in"), tr("login.empty"))
             return
 
         user = authenticate(username, password)
         if user is None:
             QMessageBox.warning(
-                self, "Sign in failed", "Invalid credentials or inactive account."
+                self, tr("login.failed"), tr("login.failed_body")
             )
             return
 

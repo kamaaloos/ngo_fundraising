@@ -19,10 +19,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@500;600;700&family=Syne:wght@600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=20261028f" />
+    <link rel="stylesheet" href="styles.css?v=20261028i" />
     <script>
       document.documentElement.classList.add("js");
     </script>
@@ -36,62 +36,102 @@
     </noscript>
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 
     <div id="app">
       <header class="site-header">
         <div class="wrap header-inner">
-          <a class="header-brand" href="#top" aria-label="NGO Fundraising home">
+          <a
+            class="header-brand"
+            href="#top"
+            data-i18n-aria="brandHome"
+            aria-label="NGO Fundraising home"
+          >
             <img src="assets/logo.png" alt="" width="40" height="40" />
-            <span>NGO Fundraising</span>
+            <span data-i18n="brand">NGO Fundraising</span>
           </a>
 
-          <button
-            class="nav-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls="site-nav"
-            aria-label="Open menu"
+          <nav
+            id="site-nav"
+            class="site-nav"
+            data-i18n-aria="navPrimary"
+            aria-label="Primary"
           >
-            <span class="nav-toggle-bars" aria-hidden="true"></span>
-          </button>
-
-          <nav id="site-nav" class="site-nav" aria-label="Primary">
             <ul class="nav-list">
-              <li><a href="#features">Features</a></li>
-              <li><a href="#download">How to download</a></li>
+              <li><a href="#features" data-i18n="navFeatures">Features</a></li>
               <li>
-                <a href="mailto:kamaaloos@gmail.com">Support</a>
+                <a href="#download" data-i18n="navDownload">How to download</a>
               </li>
               <li>
-                <a class="nav-cta" href="#download">Get the app</a>
+                <a href="mailto:kamaaloos@gmail.com" data-i18n="navSupport"
+                  >Support</a
+                >
+              </li>
+              <li>
+                <a class="nav-cta" href="#download" data-i18n="navCta"
+                  >Get the app</a
+                >
               </li>
             </ul>
           </nav>
+
+          <div class="header-tools">
+            <div
+              class="lang-switch"
+              role="group"
+              data-i18n-aria="langLabel"
+              aria-label="Language"
+            >
+              <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">
+                EN
+              </button>
+              <button type="button" class="lang-btn" data-lang="ar" aria-pressed="false">
+                ع
+              </button>
+              <button type="button" class="lang-btn" data-lang="so" aria-pressed="false">
+                SO
+              </button>
+            </div>
+
+            <button
+              class="nav-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="site-nav"
+              data-i18n-aria="openMenu"
+              aria-label="Open menu"
+            >
+              <span class="nav-toggle-bars" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
       </header>
 
       <main id="main">
-        <section class="hero" id="top" aria-label="Introduction">
+        <section
+          class="hero"
+          id="top"
+          data-i18n-aria="heroIntro"
+          aria-label="Introduction"
+        >
           <div class="hero-media" aria-hidden="true">
             <img src="assets/hero.jpg" alt="" class="hero-image" />
           </div>
           <div class="hero-veil" aria-hidden="true"></div>
           <div class="wrap hero-content">
-            <span class="eyebrow">Fundraising management made simple</span>
-            <p class="brand-mark">NGO Fundraising</p>
+            <span class="eyebrow" data-i18n="eyebrow"
+              >Fundraising management made simple</span
+            >
+            <p class="brand-mark" data-i18n="brand">NGO Fundraising</p>
             <h1 class="hero-slogan">
-              <span class="slogan-sr">
-                Every pledge accounted for. Every project clear. Every gift
-                tracked locally. Every report ready to print.
-              </span>
+              <span class="slogan-sr"></span>
               <span class="slogan-viewport" aria-hidden="true">
                 <span class="slogan-line is-current"
                   >Every pledge accounted for.</span
                 >
               </span>
             </h1>
-            <p class="lede">
+            <p class="lede" data-i18n="lede">
               From the first pledge to the final report, keep your projects,
               donors, payments and expenses organized in one easy-to-use Windows
               application. Built by MayleSoft.
@@ -100,6 +140,7 @@
               <a
                 class="btn-primary"
                 data-download-link
+                data-i18n="downloadWindows"
                 href="downloads/MayleSoft-Installer-1.1.0.exe"
                 download
               >
@@ -110,44 +151,55 @@
               </span>
             </div>
             <div class="trust">
-              <span>Works locally on your PC</span>
-              <span>No cloud account required</span>
-              <span>Printable reports</span>
+              <span data-i18n="trustLocal">Works locally on your PC</span>
+              <span data-i18n="trustNoCloud">No cloud account required</span>
+              <span data-i18n="trustReports">Printable reports</span>
             </div>
           </div>
         </section>
 
-        <section class="preview" aria-label="Product preview">
+        <section
+          class="preview"
+          data-i18n-aria="previewLabel"
+          aria-label="Product preview"
+        >
           <div class="wrap preview-inner">
             <div
               class="dashboard-mock reveal"
               data-mock
               role="img"
-              aria-label="Illustrative dashboard preview showing projects, donors and fundraising progress; not an actual application screenshot"
+              data-i18n-aria="mockAria"
+              aria-label="Illustrative dashboard preview"
             >
               <div class="mock-top">
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
-                <span class="mock-title">NGO Fundraising · Dashboard</span>
+                <span class="mock-title" data-i18n="mockTitle"
+                  >NGO Fundraising · Dashboard</span
+                >
               </div>
               <div class="mock-body">
-                <div class="mock-label">Overview</div>
-                <div class="mock-heading">Your impact at a glance</div>
+                <div class="mock-label" data-i18n="mockLabel">Overview</div>
+                <div class="mock-heading" data-i18n="mockHeading">
+                  Your impact at a glance
+                </div>
                 <div class="mock-stats">
                   <div class="mock-stat">
-                    <small>Active projects</small>
+                    <small data-i18n="mockProjects">Active projects</small>
                     <strong data-count="12">0</strong>
                   </div>
                   <div class="mock-stat">
-                    <small>Donor records</small>
+                    <small data-i18n="mockDonors">Donor records</small>
                     <strong data-count="248">0</strong>
                   </div>
                 </div>
                 <div class="mock-chart">
                   <div class="mock-chart-header">
-                    <span>Fundraising activity</span>
-                    <span class="mock-trend">↗ Progress</span>
+                    <span data-i18n="mockActivity">Fundraising activity</span>
+                    <span class="mock-trend" data-i18n="mockTrend"
+                      >↗ Progress</span
+                    >
                   </div>
                   <div class="mock-bars" aria-hidden="true">
                     <div class="mock-bar" style="--h: 39%"></div>
@@ -157,7 +209,9 @@
                     <div class="mock-bar" style="--h: 67%"></div>
                     <div class="mock-bar" style="--h: 92%"></div>
                   </div>
-                  <p class="mock-note">Illustrative figures · Not actual data</p>
+                  <p class="mock-note" data-i18n="mockNote">
+                    Illustrative figures · Not actual data
+                  </p>
                 </div>
               </div>
             </div>
@@ -167,9 +221,13 @@
         <section class="features" id="features" aria-labelledby="features-title">
           <div class="wrap">
             <div class="section-heading">
-              <span class="eyebrow">Everything in one place</span>
-              <h2 id="features-title">Less paperwork. More impact.</h2>
-              <p>
+              <span class="eyebrow" data-i18n="featuresEyebrow"
+                >Everything in one place</span
+              >
+              <h2 id="features-title" data-i18n="featuresTitle">
+                Less paperwork. More impact.
+              </h2>
+              <p data-i18n="featuresLede">
                 Purpose-built tools to help your team stay organized,
                 accountable and focused on the work that matters.
               </p>
@@ -177,24 +235,24 @@
             <div class="feature-grid">
               <article class="feature reveal">
                 <div class="feature-icon" aria-hidden="true">01</div>
-                <h3>Projects &amp; goals</h3>
-                <p>
+                <h3 data-i18n="feature1Title">Projects &amp; goals</h3>
+                <p data-i18n="feature1Body">
                   Monitor fundraising targets, raised amounts and project status
                   in one organized workspace.
                 </p>
               </article>
               <article class="feature reveal">
                 <div class="feature-icon" aria-hidden="true">02</div>
-                <h3>Donors &amp; donations</h3>
-                <p>
+                <h3 data-i18n="feature2Title">Donors &amp; donations</h3>
+                <p data-i18n="feature2Body">
                   Record donor pledges, installments, payments and the team
                   member who collected each gift.
                 </p>
               </article>
               <article class="feature reveal">
                 <div class="feature-icon" aria-hidden="true">03</div>
-                <h3>Clear, printable reports</h3>
-                <p>
+                <h3 data-i18n="feature3Title">Clear, printable reports</h3>
+                <p data-i18n="feature3Body">
                   Generate charts and PDF reports for your organization or
                   individual projects.
                 </p>
@@ -207,23 +265,25 @@
           <div class="wrap">
             <div class="download-panel reveal">
               <div class="download-copy">
-                <h2 id="download-title">Ready to make a bigger impact?</h2>
-                <p>
+                <h2 id="download-title" data-i18n="downloadTitle">
+                  Ready to make a bigger impact?
+                </h2>
+                <p data-i18n="downloadBody">
                   Install NGO Fundraising on your Windows PC and start organizing
                   your fundraising work. Application data is stored locally under
                   AppData — this is a single-PC install, not a cloud or
                   multi-workstation service.
                 </p>
-                <p class="download-note">
+                <p class="download-note" data-i18n="downloadNote">
                   30-day trial begins automatically. First launch: sign in as
-                  <code>admin</code> / <code>admin123</code>, then set your own
-                  password.
+                  admin / admin123, then set your own password.
                 </p>
                 <p
                   class="download-status"
                   data-download-status
                   role="status"
                   aria-live="polite"
+                  data-i18n="downloadChecking"
                 >
                   Checking installer availability…
                 </p>
@@ -232,13 +292,14 @@
                 <a
                   class="btn-primary btn-on-dark"
                   data-download-link
+                  data-i18n="downloadInstaller"
                   href="downloads/MayleSoft-Installer-1.1.0.exe"
                   download
                 >
                   Download installer
                 </a>
                 <p class="download-file">
-                  Expected file:
+                  <span data-i18n="downloadExpected">Expected file:</span>
                   <code>MayleSoft-Installer-1.1.0.exe</code>
                 </p>
               </div>
@@ -251,13 +312,14 @@
         <div class="wrap footer-inner">
           <p>© 2026 MayleSoft · NGO Fundraising · Developed by Hasan Kamaal</p>
           <p>
-            Need help?
+            <span data-i18n="footerHelp">Need help?</span>
             <a href="mailto:kamaaloos@gmail.com">kamaaloos@gmail.com</a>
           </p>
         </div>
       </footer>
     </div>
 
-    <script src="script.js?v=20261028h"></script>
+    <script src="i18n.js?v=20261028i"></script>
+    <script src="script.js?v=20261028i"></script>
   </body>
 </html>

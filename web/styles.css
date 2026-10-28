@@ -10,8 +10,24 @@
   --white: #ffffff;
   --font-display: "Syne", system-ui, sans-serif;
   --font-body: "Figtree", system-ui, sans-serif;
+  --font-arabic: "Noto Naskh Arabic", "Figtree", system-ui, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --header-h: 4.5rem;
+}
+
+html[lang="ar"] body,
+html[lang="ar"] .brand-mark,
+html[lang="ar"] .hero-slogan,
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3 {
+  font-family: var(--font-arabic);
+}
+
+html[lang="ar"] .brand-mark,
+html[lang="ar"] .hero-slogan,
+html[lang="ar"] .section-heading h2 {
+  letter-spacing: 0;
 }
 
 *,
@@ -111,6 +127,58 @@ code {
   gap: 1rem;
 }
 
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  z-index: 2;
+}
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.lang-btn {
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 750;
+  min-width: 2rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0 0.45rem;
+}
+
+.lang-btn.is-active,
+.lang-btn[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--white);
+}
+
+.lang-btn:focus-visible {
+  outline: 2px solid #e8ad38;
+  outline-offset: 2px;
+}
+
+html[dir="rtl"] .hero-content {
+  padding-inline: 2.75rem 0;
+}
+
+html[dir="rtl"] .trust span::before {
+  margin-inline: 0 0.4rem;
+  margin-right: 0;
+  margin-left: 0.4rem;
+}
+
 .header-brand {
   display: inline-flex;
   align-items: center;
@@ -129,6 +197,11 @@ code {
   height: 36px;
   object-fit: contain;
   border-radius: 8px;
+}
+
+.site-nav {
+  margin-inline-start: auto;
+  margin-inline-end: 0.85rem;
 }
 
 .nav-toggle {
@@ -1043,6 +1116,7 @@ code {
   }
 
   .site-nav {
+    margin-inline-start: 0;
     position: fixed;
     inset: 0 0 auto;
     padding: calc(var(--header-h) + 0.35rem) 1.25rem 1.25rem;
@@ -1052,6 +1126,14 @@ code {
     opacity: 0;
     pointer-events: none;
     transition: transform 0.3s var(--ease), opacity 0.3s var(--ease);
+  }
+
+  .site-nav {
+    margin-inline: 0;
+  }
+
+  .header-tools {
+    margin-inline-start: auto;
   }
 
   .site-header.is-open .site-nav {
@@ -1087,6 +1169,10 @@ code {
 
   .hero-content {
     padding: 5.75rem 0 3rem 1.35rem;
+  }
+
+  html[dir="rtl"] .hero-content {
+    padding: 5.75rem 1.35rem 3rem 0;
   }
 
   .hero-slogan {

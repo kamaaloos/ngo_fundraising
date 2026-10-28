@@ -21,6 +21,7 @@ from app.db.repository import (
 )
 from app.dialogs.collector_donations_dialog import CollectorDonationsDialog
 from app.dialogs.donation_dialog import DonationDialog
+from app.i18n import tr
 from app.utils import money
 from app.widgets.table_page import fill_table, make_table, selected_id
 
@@ -42,7 +43,7 @@ class DonationsPage(QWidget):
         layout.setSpacing(14)
 
         top = QHBoxLayout()
-        title = QLabel("Donations")
+        title = QLabel(tr("donations.title"))
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()

@@ -17,6 +17,7 @@ from app.auth.session import current_session
 from app.db.repository import delete_donor, list_donors, save_donor
 from app.dialogs.donor_detail_dialog import DonorDetailDialog
 from app.dialogs.donor_dialog import DonorDialog
+from app.i18n import tr
 from app.io.exporters import export_donors_pdf, export_donors_xlsx
 from app.io.importers import (
     import_donors_from_file,
@@ -42,7 +43,7 @@ class DonorsPage(QWidget):
         layout.setSpacing(14)
 
         top = QHBoxLayout()
-        title = QLabel("Donors")
+        title = QLabel(tr("donors.title"))
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()

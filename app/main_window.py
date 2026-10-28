@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 from app.auth.session import current_session
 from app.branding import COPYRIGHT_TEXT, app_icon, apply_windows_titlebar_theme
 from app.dialogs.license_dialog import LicenseDialog
+from app.i18n import tr
 from app.licensing import get_license_status
 from app.db.database import (
     days_since_last_backup,
@@ -43,7 +44,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("NGO Fundraising")
+        self.setWindowTitle(tr("app.name"))
         self.setWindowIcon(app_icon())
         self._ending = False
         self._to_login = False
@@ -69,7 +70,7 @@ class MainWindow(QMainWindow):
         self._build_pages()
         self._configure_nav()
         self.refresh_all()
-        self.statusBar().showMessage("Ready")
+        self.statusBar().showMessage(tr("common.ready"))
         lic = get_license_status()
         self._license_btn = QPushButton(lic.message if lic.expires_on else "License")
         self._license_btn.setObjectName("loginForgotLink")
@@ -128,17 +129,17 @@ class MainWindow(QMainWindow):
         self.sidebar.set_user(display, current_session.role)
 
         pages = [
-            ("Overview", "Overview"),
-            ("Projects", "Projects"),
-            ("Dashboard", "Project board"),
-            ("Donors", "Donors"),
-            ("Donations", "Donations"),
-            ("Expenses", "Expenses"),
-            ("Reports", "Reports"),
+            ("Overview", tr("nav.overview")),
+            ("Projects", tr("nav.projects")),
+            ("Dashboard", tr("nav.dashboard")),
+            ("Donors", tr("nav.donors")),
+            ("Donations", tr("nav.donations")),
+            ("Expenses", tr("nav.expenses")),
+            ("Reports", tr("nav.reports")),
         ]
         if current_session.is_admin:
-            pages.append(("Users", "Users"))
-        pages.append(("Settings", "Settings"))
+            pages.append(("Users", tr("nav.users")))
+        pages.append(("Settings", tr("nav.settings")))
 
         self.sidebar.set_pages(pages)
         self._navigate("Overview")
@@ -192,18 +193,10 @@ class MainWindow(QMainWindow):
             return
         self._backup_reminder_shown = True
         if days is None:
-            body = (
-                "No database backup has been recorded on this PC yet.\n\n"
-                "This version keeps data on one computer only. Export a backup "
-                "from Settings, or enable backup-on-exit."
-            )
+            body = tr("backup.reminder_none")
         else:
-            body = (
-                f"The last backup on this PC was about {days} day(s) ago.\n\n"
-                "Export a fresh copy from Settings → Data backup, or keep "
-                "backup-on-exit enabled."
-            )
-        QMessageBox.information(self, "Backup reminder", body)
+            body = tr("backup.reminder_days", days=days)
+        QMessageBox.information(self, tr("backup.reminder_title"), body)
 
     def _run_exit_backup(self) -> None:
         if not current_session.is_admin or self._to_login:
@@ -288,7 +281,7 @@ class MainWindow(QMainWindow):
 
     def _logout(self):
         if (
-            QMessageBox.question(self, "Log out", "Sign out of this session?")
+            QMessageBox.question(self, tr("logout.title"), tr("logout.confirm"))
             != QMessageBox.StandardButton.Yes
         ):
             return

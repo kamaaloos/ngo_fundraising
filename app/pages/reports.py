@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 
 from app.auth.session import current_session
 from app.db.repository import portfolio_report_stats, project_report_stats
+from app.i18n import tr
 from app.io.report_print import export_report_pdf, print_report
 from app.utils import money
 from app.widgets.chart_hover import enable_bar_hover, enable_line_hover
@@ -102,7 +103,7 @@ class ReportsPage(QWidget):
         layout.setSpacing(16)
 
         top = QHBoxLayout()
-        title = QLabel("Reports & statistics")
+        title = QLabel(tr("reports.title"))
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()

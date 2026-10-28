@@ -70,17 +70,20 @@
     }
   };
 
+  const i18n = () => window.NGO_I18N;
+
   const verifyInstaller = async () => {
+    const tr = i18n()?.t || ((k, v) => k);
     metaEls.forEach((el) => {
-      el.textContent = `Windows 10 / 11 · MayleSoft Installer ${installer.version} · 30-day trial`;
+      el.textContent = tr("ctaMeta", { version: installer.version });
     });
 
     if (location.protocol === "file:") {
       applyDownloadLinks(true);
       setStatus(
         installer.viaBlob
-          ? `Using MayleSoft Blob URL for ${installer.fileName}. Open via http:// to verify.`
-          : `Local preview: prefer http:// host, or upload the installer to MayleSoft Blob (npm run upload:installer).`,
+          ? tr("statusBlobPreview", { file: installer.fileName })
+          : tr("statusFilePreview"),
         "is-warn"
       );
       return;
@@ -118,22 +121,22 @@
           ? Number(length)
           : 0;
       if (bytes > 1024 * 1024) {
-        sizeHint = ` · ${(bytes / (1024 * 1024)).toFixed(0)} MB reported`;
+        sizeHint = ` · ${(bytes / (1024 * 1024)).toFixed(0)} MB`;
       }
 
       applyDownloadLinks(true);
       setStatus(
         installer.viaBlob
-          ? `Installer on MayleSoft Blob: ${installer.fileName}${sizeHint}.`
-          : `Installer verified: ${installer.fileName}${sizeHint}.`,
+          ? tr("statusBlobOk", { file: installer.fileName, size: sizeHint })
+          : tr("statusLocalOk", { file: installer.fileName, size: sizeHint }),
         "is-ok"
       );
     } catch (_err) {
       applyDownloadLinks(true);
       setStatus(
         installer.viaBlob
-          ? `Could not verify Blob URL yet. Check the MayleSoft store upload and CORS.`
-          : `${installer.fileName} not on this host. Upload to MayleSoft Blob: npm run upload:installer`,
+          ? tr("statusBlobWarn")
+          : tr("statusMissing", { file: installer.fileName }),
         "is-warn"
       );
     }
@@ -143,14 +146,20 @@
     if (!header || !toggle) return;
     header.classList.remove("is-open");
     toggle.setAttribute("aria-expanded", "false");
-    toggle.setAttribute("aria-label", "Open menu");
+    toggle.setAttribute(
+      "aria-label",
+      i18n()?.t("openMenu") || "Open menu"
+    );
   };
 
   const openNav = () => {
     if (!header || !toggle) return;
     header.classList.add("is-open");
     toggle.setAttribute("aria-expanded", "true");
-    toggle.setAttribute("aria-label", "Close menu");
+    toggle.setAttribute(
+      "aria-label",
+      i18n()?.t("closeMenu") || "Close menu"
+    );
   };
 
   if (toggle && header) {
@@ -255,29 +264,36 @@
     });
   }
 
-  const slogans = [
-    "Every pledge accounted for.",
-    "Every project clear.",
-    "Every gift tracked locally.",
-    "Every report ready to print.",
-  ];
+  let sloganTimer = null;
+  let sloganSwapTimer = null;
+
+  const stopSloganRoll = () => {
+    if (sloganTimer) window.clearInterval(sloganTimer);
+    if (sloganSwapTimer) window.clearTimeout(sloganSwapTimer);
+    sloganTimer = null;
+    sloganSwapTimer = null;
+  };
 
   const startSloganRoll = () => {
     const viewport = document.querySelector(".slogan-viewport");
     const sr = document.querySelector(".slogan-sr");
     if (!viewport) return;
 
+    stopSloganRoll();
+    const pack = i18n()?.getPack?.();
+    const slogans = pack?.slogans || [
+      "Every pledge accounted for.",
+      "Every project clear.",
+      "Every gift tracked locally.",
+      "Every report ready to print.",
+    ];
+
+    viewport.innerHTML = "";
     let index = 0;
-    let current = viewport.querySelector(".slogan-line");
-    if (!current) {
-      current = document.createElement("span");
-      current.className = "slogan-line is-current";
-      current.textContent = slogans[0];
-      viewport.appendChild(current);
-    } else {
-      current.textContent = slogans[0];
-      current.className = "slogan-line is-current";
-    }
+    let current = document.createElement("span");
+    current.className = "slogan-line is-current";
+    current.textContent = slogans[0];
+    viewport.appendChild(current);
 
     if (sr) sr.textContent = slogans.join(" ");
     if (reduceMotion || slogans.length < 2) return;
@@ -296,7 +312,7 @@
       current.classList.add("is-exit");
 
       const outgoing = current;
-      window.setTimeout(() => {
+      sloganSwapTimer = window.setTimeout(() => {
         outgoing.remove();
         next.classList.remove("is-enter");
         next.classList.add("is-current");
@@ -305,8 +321,26 @@
       }, swapMs);
     };
 
-    window.setInterval(tick, holdMs + swapMs);
+    sloganTimer = window.setInterval(tick, holdMs + swapMs);
   };
+
+  document.querySelectorAll("[data-lang]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const lang = btn.getAttribute("data-lang");
+      if (!lang || !i18n()) return;
+      i18n().applyLocale(lang);
+      closeNav();
+    });
+  });
+
+  if (i18n()) {
+    i18n().setOnLocaleChange(() => {
+      startSloganRoll();
+      verifyInstaller();
+      applyDownloadLinks(true);
+    });
+    i18n().applyLocale(i18n().detectLocale());
+  }
 
   loadDownloadConfig()
     .then(() => verifyInstaller())
