@@ -6,6 +6,7 @@ __pycache__/
 .mypy_cache/
 build/
 dist/
+public/
 *.spec.bak
 .coverage
 htmlcov/
@@ -16,3 +17,4 @@ installer/node_modules/
 installer/dist/
 installer/payload/
 installer/*.log
+.vercel

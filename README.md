@@ -88,6 +88,14 @@ Static site in `web/` (open `web/index.html` or host the `web` folder).
 start web\index.html
 ```
 
+**Vercel:** this repo’s `vercel.json` deploys the landing page only (copies `web/` → `public/`).  
+It does **not** run the PySide6 desktop app. After connecting the GitHub repo, redeploy;
+if Python is still detected, set **Project → Settings → Root Directory** to `web`.
+
+Installer `.exe` files under `web/downloads/` are gitignored (large). Host the installer
+on a file host / release asset and update the landing download URL, or upload the exe
+in the Vercel dashboard / CI after build.
+
 The frozen build never auto-seeds demo data.
 
 Default admin (first launch only):

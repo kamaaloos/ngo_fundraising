@@ -1,0 +1,8 @@
+{
+  "name": "ngo-fundraising-landing",
+  "private": true,
+  "description": "Static landing page for NGO Fundraising (Vercel). Desktop app is not deployed here.",
+  "scripts": {
+    "build": "node scripts/prepare_vercel_site.js"
+  }
+}
