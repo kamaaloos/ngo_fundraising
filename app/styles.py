@@ -548,6 +548,15 @@ QScrollArea#loginFormScroll > QWidget > QWidget {
     background-color: #E8EEF6;
 }
 
+QScrollArea#settingsScroll {
+    background-color: #E8EEF6;
+    border: none;
+}
+
+QScrollArea#settingsScroll > QWidget > QWidget {
+    background-color: #E8EEF6;
+}
+
 QLabel#loginTitle {
     color: #12233A;
     font-size: 24px;
@@ -786,6 +795,11 @@ QWidget {{
 
 QMainWindow,
 QWidget#contentArea {{
+    background-color: #0B1220;
+}}
+
+QScrollArea#settingsScroll,
+QScrollArea#settingsScroll > QWidget > QWidget {{
     background-color: #0B1220;
 }}
 

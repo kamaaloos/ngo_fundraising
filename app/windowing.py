@@ -6,8 +6,11 @@ that match local `python main.py` behavior in packaged installs too.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QRect
+from PySide6.QtCore import QRect, Qt
 from PySide6.QtWidgets import QApplication, QWidget
+
+# Qt's historic QWIDGETSIZE_MAX ((1 << 24) - 1); not exported by all PySide6 builds.
+_QWIDGETSIZE_MAX = 16777215
 
 
 def available_desktop() -> QRect:
@@ -39,7 +42,18 @@ def fit_window(
     width_ratio: float = 0.96,
     center: bool = True,
 ) -> None:
-    """Resize ``window`` to a compact size that always fits the desktop."""
+    """Resize ``window`` to a compact size that always fits the desktop.
+
+    Does not clamp maximum size — that blocked the Windows maximize control.
+    Skips resize/move when the window is already maximized or full-screen.
+    """
+    if window.isMaximized() or window.isFullScreen():
+        return
+    # If Qt reports a maximized window state before the native show completes.
+    state = window.windowState()
+    if state & (Qt.WindowState.WindowMaximized | Qt.WindowState.WindowFullScreen):
+        return
+
     available = available_desktop()
     usable_w = max(640, available.width() - margin * 2)
     usable_h = max(480, available.height() - margin * 2)
@@ -53,8 +67,8 @@ def fit_window(
     target_h = max(min(min_height, max_h), target_h)
 
     window.setMinimumSize(min(min_width, max_w), min(min_height, max_h))
-    # Allow maximize, but don't force a huge initial frame.
-    window.setMaximumSize(available.width(), available.height())
+    # Leave maximize / manual grow unrestricted (title-bar maximize control).
+    window.setMaximumSize(_QWIDGETSIZE_MAX, _QWIDGETSIZE_MAX)
     window.resize(target_w, target_h)
 
     if center:

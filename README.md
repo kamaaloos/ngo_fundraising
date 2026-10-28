@@ -56,24 +56,29 @@ python scripts/seed_demo.py
 
 ### Customer Windows build
 
+Canonical ship channel: **MayleSoft Electron installer** (in-app copy; no Inno Setup popup).
+Legacy `packaging\NGOFundraising.iss` is not used for customers.
+
 **1. Build the desktop app payload**
 
 ```bat
 packaging\build_windows.bat
 ```
 
-Creates `dist\NGOFundraising\` (and optionally the older Inno Setup exe if Inno is installed).
+Creates `dist\NGOFundraising\`.
 
-**2. Build the MayleSoft futuristic installer (recommended)**
+**2. Build the MayleSoft installer**
 
 ```bat
-cd installer
+cd MayleSoft-Installer
 npm install
 npm run dist
 ```
 
-Ship: `installer\dist\MayleSoft-Installer-1.1.0.exe`  
-See `installer\README.md` for UI preview (`npm start`) and payload replacement.
+Or one-shot from repo root: `installer\build_installer.bat`
+
+Ship: `MayleSoft-Installer\dist\MayleSoft-Installer-1.1.0.exe`  
+See `MayleSoft-Installer\README.md` for UI preview (`npm start`) and payload sync.
 
 ### Download landing page
 
@@ -151,14 +156,27 @@ Created automatically on first launch. Schema upgrades are **additive** (non-des
 Before each upgrade the app writes a timestamped backup next to the database file
 (`fundraising_backup_YYYYMMDD_HHMMSS.sqlite3`).
 
-Admins can also **Export backup…** / **Restore from backup…** under Settings → Data backup
-(restore quits the app; reopen afterward).
+### One computer per install
+
+This version is a **single-PC** SQLite app. There is no multi-workstation shared database,
+replication, or concurrent editing across machines. Copying the `.sqlite3` file to another
+PC is a manual migrate/restore, not live sync. Plan backups accordingly.
+
+### Backups
+
+- Admins: **Export backup…** / **Restore from backup…** under Settings → Data backup
+  (restore quits the app; reopen afterward).
+- **Backup on exit** (Settings, on by default for admins) writes a local timestamped copy
+  when quitting the main window (not when only signing out to the login screen).
+- If no recent backup is found (default: 7 days), admins get a reminder on open.
 
 ## Tests
 
 ```bat
 pytest
 ```
+
+Configured via `pytest.ini` (`testpaths = tests`).
 
 ## Typical workflow
 

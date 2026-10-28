@@ -3,11 +3,13 @@ from pathlib import Path
 
 from sqlalchemy import select
 
+from app.db import database as db
 from app.db.database import (
-    DATABASE_PATH,
     SessionLocal,
+    days_since_last_backup,
     export_database_backup,
     get_app_meta,
+    local_backup_destination,
     restore_database_backup,
     set_app_meta,
 )
@@ -30,6 +32,11 @@ def test_export_and_restore_roundtrip(admin_session, tmp_path: Path):
     export_database_backup(backup)
     assert backup.exists()
     assert backup.stat().st_size > 0
+    assert days_since_last_backup() == 0
+
+    local = export_database_backup(local_backup_destination())
+    assert local.exists()
+    assert local.parent == db.DATABASE_PATH.parent
 
     with SessionLocal.begin() as session:
         session.add(Donor(name="After Export", email="after@example.org"))
@@ -40,7 +47,7 @@ def test_export_and_restore_roundtrip(admin_session, tmp_path: Path):
         names = {d.name for d in session.scalars(select(Donor)).all()}
     assert "Backup Probe" in names
     assert "After Export" not in names
-    assert DATABASE_PATH.exists()
+    assert db.DATABASE_PATH.exists()
 
 
 def test_license_rejects_expiry_without_token(admin_session):

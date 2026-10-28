@@ -561,9 +561,28 @@ def donor_project_summary(donor_id: int) -> dict:
         }
 
 
+def _donor_is_accessible(donor: Donor) -> bool:
+    """Admin: all. Non-admin: unused donors, or any gift on an assigned project."""
+    if current_session.is_admin:
+        return True
+    allowed = set(current_session.project_ids)
+    if not donor.donations:
+        return True
+    return any(d.project_id in allowed for d in donor.donations)
+
+
 def find_donor_by_email_or_name(
-    email: str = "", name: str = ""
+    email: str = "",
+    name: str = "",
+    *,
+    scoped: bool = True,
 ) -> Donor | None:
+    """Locate a donor by email (preferred) or exact name.
+
+    When ``scoped`` is True (default), non-admins only match donors they can
+    already see. Pass ``scoped=False`` only for trusted project-link imports
+    that may reuse a global email without exposing the donor elsewhere.
+    """
     require_auth()
     with SessionLocal() as session:
         donor = None
@@ -571,26 +590,54 @@ def find_donor_by_email_or_name(
         name = (name or "").strip()
         if email:
             donor = session.scalar(
-                select(Donor).where(Donor.email.ilike(email))
+                select(Donor)
+                .options(selectinload(Donor.donations))
+                .where(Donor.email.ilike(email))
             )
         if donor is None and name:
             donor = session.scalar(
-                select(Donor).where(Donor.name.ilike(name))
+                select(Donor)
+                .options(selectinload(Donor.donations))
+                .where(Donor.name.ilike(name))
             )
         if donor is None:
+            return None
+        if scoped and not _donor_is_accessible(donor):
             return None
         session.expunge(donor)
         return donor
 
 
-def find_or_create_donor(values: dict) -> tuple[int, bool]:
+def find_or_create_donor(
+    values: dict,
+    *,
+    allow_cross_project: bool = False,
+) -> tuple[int, bool]:
+    """Return (donor_id, created).
+
+    ``allow_cross_project`` lets project-linked imports reuse an existing donor
+    by email even if that donor only gave to other projects. Without it, a
+    conflict outside the caller's scope raises AccessDenied (no silent duplicate).
+    """
     require_auth()
+    email = values.get("email", "")
+    name = values.get("name", "")
     existing = find_donor_by_email_or_name(
-        email=values.get("email", ""),
-        name=values.get("name", ""),
+        email=email,
+        name=name,
+        scoped=not allow_cross_project,
     )
     if existing is not None:
         return existing.id, False
+    if not allow_cross_project and not current_session.is_admin:
+        conflict = find_donor_by_email_or_name(
+            email=email, name=name, scoped=False
+        )
+        if conflict is not None:
+            raise AccessDenied(
+                "A donor with this email or name exists outside your projects. "
+                "Ask an administrator to link them."
+            )
     return save_donor(None, values), True
 
 
@@ -604,9 +651,15 @@ def save_donor(donor_id: int | None, values: dict) -> int:
             session.add(donor)
             session.flush()
             return donor.id
-        donor = session.get(Donor, donor_id)
+        donor = session.scalar(
+            select(Donor)
+            .options(selectinload(Donor.donations))
+            .where(Donor.id == donor_id)
+        )
         if donor is None:
             raise ValueError("Donor not found")
+        if not _donor_is_accessible(donor):
+            raise AccessDenied("You cannot edit this donor.")
         for key, value in values.items():
             setattr(donor, key, value)
         return donor.id

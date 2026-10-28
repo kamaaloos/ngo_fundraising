@@ -152,6 +152,16 @@ def _column_exists(connection, table: str, column: str) -> bool:
     return any(row[1] == column for row in rows)
 
 
+LAST_BACKUP_META_KEY = "last_backup_at"
+
+
+def _mark_backup_time() -> None:
+    try:
+        set_app_meta(LAST_BACKUP_META_KEY, datetime.now().isoformat(timespec="seconds"))
+    except Exception:
+        pass
+
+
 def backup_database() -> Path | None:
     """Copy the live SQLite file before applying migrations (safe during init)."""
     if not DATABASE_PATH.exists():
@@ -159,6 +169,7 @@ def backup_database() -> Path | None:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     dest = DATABASE_PATH.parent / f"fundraising_backup_{stamp}.sqlite3"
     shutil.copy2(DATABASE_PATH, dest)
+    _mark_backup_time()
     return dest
 
 
@@ -183,7 +194,36 @@ def export_database_backup(dest: Path | str) -> Path:
                 src.backup(dst)
     finally:
         configure_engine(DATABASE_PATH)
+    _mark_backup_time()
     return dest_path
+
+
+def local_backup_destination() -> Path:
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return DATABASE_PATH.parent / f"fundraising_backup_{stamp}.sqlite3"
+
+
+def days_since_last_backup() -> int | None:
+    """Days since the newest known backup, or None if none found."""
+    newest: datetime | None = None
+    raw = get_app_meta(LAST_BACKUP_META_KEY)
+    if raw:
+        try:
+            newest = datetime.fromisoformat(raw)
+        except ValueError:
+            newest = None
+    parent = DATABASE_PATH.parent
+    if parent.exists():
+        for path in parent.glob("fundraising_backup_*.sqlite3"):
+            try:
+                mtime = datetime.fromtimestamp(path.stat().st_mtime)
+            except OSError:
+                continue
+            if newest is None or mtime > newest:
+                newest = mtime
+    if newest is None:
+        return None
+    return max(0, (datetime.now() - newest).days)
 
 
 def restore_database_backup(source: Path | str) -> Path:

@@ -1,16 +1,18 @@
 # Windows packaging
 
-Builds a PyInstaller app folder **and** a customer `Setup.exe` (Inno Setup).
+Builds the **PyInstaller app folder** used as payload by the MayleSoft Electron installer.
+
+Customer shipping channel: **MayleSoft-Installer** (Electron). Legacy Inno Setup
+(`NGOFundraising.iss`) is kept in-repo for reference only and is **not** part of the
+customer build path.
 
 ## Prerequisites
 
 - Windows 10/11
 - Python 3.10+ with project `.venv` and `requirements.txt` installed
-- [Inno Setup 6](https://jrsoftware.org/isdl.php) (for the installer)
+- Node.js 18+ (to build the Electron installer)
 
-If Inno Setup is missing, the bat still produces the portable folder under `dist\NGOFundraising\`.
-
-## Build
+## Build app payload
 
 From the repo root:
 
@@ -18,21 +20,30 @@ From the repo root:
 packaging\build_windows.bat
 ```
 
-Outputs:
+Output:
 
 ```
-dist\NGOFundraising\NGOFundraising.exe          ← portable folder
-dist\NGOFundraising-Setup-1.0.0.exe             ← customer installer
+dist\NGOFundraising\NGOFundraising.exe
 ```
 
-Ship the **Setup.exe** to customers. They run it, optionally create a desktop shortcut, and launch from the Start Menu.
+## Build customer installer
 
-## What the installer does
+```bat
+cd MayleSoft-Installer
+npm install
+npm run dist
+```
 
-- Installs under `%LOCALAPPDATA%\MayleSoft\NGO Fundraising\` (no admin UAC by default)
-- Start Menu shortcut (+ optional desktop icon)
-- Launch after install
-- Uninstall via Windows Settings / Start Menu
+Or from repo root (builds payload if needed, then Electron installer):
+
+```bat
+installer\build_installer.bat
+```
+
+Ship: `MayleSoft-Installer\dist\MayleSoft-Installer-1.1.0.exe`  
+(or `installer\dist\…` when using that folder).
+
+The installer copies files inside its own UI (no separate Inno Setup popup).
 
 App data (database, license, recovery) stays in:
 
@@ -46,5 +57,4 @@ Uninstalling the app does **not** delete that data folder (on purpose).
 
 - Demo seed is forced off in the frozen build (`packaging/pyi_rth_ngo.py`).
 - Icon: `app/assets/app.ico`.
-- Bump `#define MyAppVersion` in `NGOFundraising.iss` when releasing.
 - Re-run the bat after dependency or asset changes.

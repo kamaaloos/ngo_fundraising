@@ -68,12 +68,16 @@ MODES = {
     "night": "Night (dark)",
 }
 
+DEFAULT_BACKUP_REMINDER_DAYS = 7
+
 
 @dataclass
 class UISettings:
     theme: str = "teal"
     mode: str = "day"
     has_user_logo: bool = False
+    backup_on_exit: bool = True
+    backup_reminder_days: int = DEFAULT_BACKUP_REMINDER_DAYS
 
     def accent_key(self) -> str:
         return self.theme if self.theme in THEME_PRESETS else "teal"
@@ -89,10 +93,17 @@ def load_settings() -> UISettings:
         data = json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return UISettings(has_user_logo=USER_LOGO_PATH.exists())
+    reminder = data.get("backup_reminder_days", DEFAULT_BACKUP_REMINDER_DAYS)
+    try:
+        reminder_days = max(1, int(reminder))
+    except (TypeError, ValueError):
+        reminder_days = DEFAULT_BACKUP_REMINDER_DAYS
     return UISettings(
         theme=str(data.get("theme") or "teal"),
         mode=str(data.get("mode") or "day"),
         has_user_logo=USER_LOGO_PATH.exists(),
+        backup_on_exit=bool(data.get("backup_on_exit", True)),
+        backup_reminder_days=reminder_days,
     )
 
 
@@ -101,6 +112,8 @@ def save_settings(settings: UISettings) -> None:
     payload = {
         "theme": settings.accent_key(),
         "mode": settings.mode_key(),
+        "backup_on_exit": bool(settings.backup_on_exit),
+        "backup_reminder_days": int(settings.backup_reminder_days),
     }
     SETTINGS_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 

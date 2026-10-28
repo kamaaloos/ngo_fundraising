@@ -3,98 +3,261 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>NGO Fundraising — Download</title>
+    <title>NGO Fundraising | MayleSoft</title>
     <meta
       name="description"
-      content="NGO Fundraising by MayleSoft — desktop software for projects, donors, donations, and reports. Download for Windows."
+      content="NGO Fundraising by MayleSoft — manage projects, donors, donations and reports on Windows. Data stays on your PC."
     />
+    <meta name="theme-color" content="#12334A" />
+    <meta property="og:title" content="NGO Fundraising by MayleSoft" />
+    <meta
+      property="og:description"
+      content="Desktop fundraising software for Windows. Local data. MayleSoft installer."
+    />
+    <meta property="og:type" content="website" />
     <link rel="icon" href="assets/app_icon.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Syne:wght@600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20261028f" />
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+    <noscript>
+      <style>
+        .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      </style>
+    </noscript>
   </head>
   <body>
-    <header class="site-header">
-      <a class="header-brand" href="#top" aria-label="NGO Fundraising home">
-        <img src="assets/logo.png" alt="" width="40" height="40" />
-        <span>NGO Fundraising</span>
-      </a>
-      <a class="header-cta" href="#download">Download</a>
-    </header>
+    <a class="skip-link" href="#main">Skip to content</a>
 
-    <main id="top">
-      <section class="hero" aria-label="Introduction">
-        <div class="hero-media" aria-hidden="true">
-          <img src="assets/hero.jpg" alt="" class="hero-image" />
-        </div>
-        <div class="hero-veil" aria-hidden="true"></div>
-        <div class="hero-content">
-          <p class="brand-mark">NGO Fundraising</p>
-          <h1>Every pledge accounted for. Every project clear.</h1>
-          <p class="lede">
-            Desktop fundraising for NGOs on Windows — donors, gifts, expenses, and
-            reports. Built by MayleSoft.
-          </p>
-          <div class="cta-row">
-            <a class="btn-primary" href="downloads/MayleSoft-Installer-1.1.0.exe" download>
-              Download for Windows
-            </a>
-            <span class="cta-meta">MayleSoft Installer · Windows 10/11</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="purpose" aria-labelledby="purpose-title">
-        <h2 id="purpose-title">Made for real fundraising work</h2>
-        <p class="purpose-lede">
-          One local app for the full cycle — from first pledge to final report.
-        </p>
-        <ul class="purpose-list">
-          <li>
-            <strong>Projects &amp; targets</strong>
-            <span>Track goals, raised amounts, and status in one workspace.</span>
-          </li>
-          <li>
-            <strong>Donors &amp; payments</strong>
-            <span>Record pledges, installments, and who collected each gift.</span>
-          </li>
-          <li>
-            <strong>Reports you can print</strong>
-            <span>Charts and PDFs for overall progress or a single project.</span>
-          </li>
-        </ul>
-      </section>
-
-      <section class="download" id="download" aria-labelledby="download-title">
-        <div class="download-panel">
-          <h2 id="download-title">Get the Windows installer</h2>
-          <p>
-            Run the setup on your PC. Your data stays on this computer under
-            AppData — no cloud account required.
-          </p>
-          <a class="btn-primary" href="downloads/MayleSoft-Installer-1.1.0.exe" download>
-            Download MayleSoft-Installer-1.1.0.exe
+    <div id="app">
+      <header class="site-header">
+        <div class="wrap header-inner">
+          <a class="header-brand" href="#top" aria-label="NGO Fundraising home">
+            <img src="assets/logo.png" alt="" width="40" height="40" />
+            <span>NGO Fundraising</span>
           </a>
-          <p class="download-note">
-            First launch: sign in as <code>admin</code> / <code>admin123</code>,
-            then set your own password. 30-day trial starts automatically.
+
+          <button
+            class="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="site-nav"
+            aria-label="Open menu"
+          >
+            <span class="nav-toggle-bars" aria-hidden="true"></span>
+          </button>
+
+          <nav id="site-nav" class="site-nav" aria-label="Primary">
+            <ul class="nav-list">
+              <li><a href="#features">Features</a></li>
+              <li><a href="#download">How to download</a></li>
+              <li>
+                <a href="mailto:kamaaloos@gmail.com">Support</a>
+              </li>
+              <li>
+                <a class="nav-cta" href="#download">Get the app</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </header>
+
+      <main id="main">
+        <section class="hero" id="top" aria-label="Introduction">
+          <div class="hero-media" aria-hidden="true">
+            <img src="assets/hero.jpg" alt="" class="hero-image" />
+          </div>
+          <div class="hero-veil" aria-hidden="true"></div>
+          <div class="wrap hero-content">
+            <span class="eyebrow">Fundraising management made simple</span>
+            <p class="brand-mark">NGO Fundraising</p>
+            <h1 class="hero-slogan">
+              <span class="slogan-sr">
+                Every pledge accounted for. Every project clear. Every gift
+                tracked locally. Every report ready to print.
+              </span>
+              <span class="slogan-viewport" aria-hidden="true">
+                <span class="slogan-line is-current"
+                  >Every pledge accounted for.</span
+                >
+              </span>
+            </h1>
+            <p class="lede">
+              From the first pledge to the final report, keep your projects,
+              donors, payments and expenses organized in one easy-to-use Windows
+              application. Built by MayleSoft.
+            </p>
+            <div class="cta-row">
+              <a
+                class="btn-primary"
+                data-download-link
+                href="downloads/MayleSoft-Installer-1.1.0.exe"
+                download
+              >
+                Download for Windows
+              </a>
+              <span class="cta-meta" data-download-meta>
+                Windows 10 / 11 · MayleSoft Installer 1.1.0 · 30-day trial
+              </span>
+            </div>
+            <div class="trust">
+              <span>Works locally on your PC</span>
+              <span>No cloud account required</span>
+              <span>Printable reports</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="preview" aria-label="Product preview">
+          <div class="wrap preview-inner">
+            <div
+              class="dashboard-mock reveal"
+              data-mock
+              role="img"
+              aria-label="Illustrative dashboard preview showing projects, donors and fundraising progress; not an actual application screenshot"
+            >
+              <div class="mock-top">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="mock-title">NGO Fundraising · Dashboard</span>
+              </div>
+              <div class="mock-body">
+                <div class="mock-label">Overview</div>
+                <div class="mock-heading">Your impact at a glance</div>
+                <div class="mock-stats">
+                  <div class="mock-stat">
+                    <small>Active projects</small>
+                    <strong data-count="12">0</strong>
+                  </div>
+                  <div class="mock-stat">
+                    <small>Donor records</small>
+                    <strong data-count="248">0</strong>
+                  </div>
+                </div>
+                <div class="mock-chart">
+                  <div class="mock-chart-header">
+                    <span>Fundraising activity</span>
+                    <span class="mock-trend">↗ Progress</span>
+                  </div>
+                  <div class="mock-bars" aria-hidden="true">
+                    <div class="mock-bar" style="--h: 39%"></div>
+                    <div class="mock-bar" style="--h: 65%"></div>
+                    <div class="mock-bar" style="--h: 50%"></div>
+                    <div class="mock-bar" style="--h: 77%"></div>
+                    <div class="mock-bar" style="--h: 67%"></div>
+                    <div class="mock-bar" style="--h: 92%"></div>
+                  </div>
+                  <p class="mock-note">Illustrative figures · Not actual data</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="features" id="features" aria-labelledby="features-title">
+          <div class="wrap">
+            <div class="section-heading">
+              <span class="eyebrow">Everything in one place</span>
+              <h2 id="features-title">Less paperwork. More impact.</h2>
+              <p>
+                Purpose-built tools to help your team stay organized,
+                accountable and focused on the work that matters.
+              </p>
+            </div>
+            <div class="feature-grid">
+              <article class="feature reveal">
+                <div class="feature-icon" aria-hidden="true">01</div>
+                <h3>Projects &amp; goals</h3>
+                <p>
+                  Monitor fundraising targets, raised amounts and project status
+                  in one organized workspace.
+                </p>
+              </article>
+              <article class="feature reveal">
+                <div class="feature-icon" aria-hidden="true">02</div>
+                <h3>Donors &amp; donations</h3>
+                <p>
+                  Record donor pledges, installments, payments and the team
+                  member who collected each gift.
+                </p>
+              </article>
+              <article class="feature reveal">
+                <div class="feature-icon" aria-hidden="true">03</div>
+                <h3>Clear, printable reports</h3>
+                <p>
+                  Generate charts and PDF reports for your organization or
+                  individual projects.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="download" id="download" aria-labelledby="download-title">
+          <div class="wrap">
+            <div class="download-panel reveal">
+              <div class="download-copy">
+                <h2 id="download-title">Ready to make a bigger impact?</h2>
+                <p>
+                  Install NGO Fundraising on your Windows PC and start organizing
+                  your fundraising work. Application data is stored locally under
+                  AppData — this is a single-PC install, not a cloud or
+                  multi-workstation service.
+                </p>
+                <p class="download-note">
+                  30-day trial begins automatically. First launch: sign in as
+                  <code>admin</code> / <code>admin123</code>, then set your own
+                  password.
+                </p>
+                <p
+                  class="download-status"
+                  data-download-status
+                  role="status"
+                  aria-live="polite"
+                >
+                  Checking installer availability…
+                </p>
+              </div>
+              <div class="download-actions">
+                <a
+                  class="btn-primary btn-on-dark"
+                  data-download-link
+                  href="downloads/MayleSoft-Installer-1.1.0.exe"
+                  download
+                >
+                  Download installer
+                </a>
+                <p class="download-file">
+                  Expected file:
+                  <code>MayleSoft-Installer-1.1.0.exe</code>
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="wrap footer-inner">
+          <p>© 2026 MayleSoft · NGO Fundraising · Developed by Hasan Kamaal</p>
+          <p>
+            Need help?
+            <a href="mailto:kamaaloos@gmail.com">kamaaloos@gmail.com</a>
           </p>
         </div>
-      </section>
-    </main>
+      </footer>
+    </div>
 
-    <footer class="site-footer">
-      <p>© 2026 MayleSoft · NGO Fundraising · Developed by Hasan Kamaal</p>
-      <p>
-        Support:
-        <a href="mailto:kamaaloos@gmail.com">kamaaloos@gmail.com</a>
-      </p>
-    </footer>
-
-    <script src="script.js"></script>
+    <script src="script.js?v=20261028e"></script>
   </body>
 </html>

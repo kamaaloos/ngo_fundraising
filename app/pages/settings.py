@@ -10,6 +10,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
+    QCheckBox,
     QFileDialog,
     QFormLayout,
     QFrame,
@@ -18,6 +19,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QRadioButton,
+    QScrollArea,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -40,6 +43,21 @@ from app.settings_store import (
 )
 
 
+def _panel() -> QFrame:
+    card = QFrame()
+    card.setObjectName("panel")
+    card.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
+    return card
+
+
+def _wrap_label(text: str) -> QLabel:
+    label = QLabel(text)
+    label.setObjectName("muted")
+    label.setWordWrap(True)
+    label.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
+    return label
+
+
 class SettingsPage(QWidget):
     """User appearance preferences (does not change the MayleSoft app icon)."""
 
@@ -49,7 +67,21 @@ class SettingsPage(QWidget):
         super().__init__()
         self.setObjectName("contentArea")
 
-        layout = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("settingsScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        outer.addWidget(scroll)
+
+        host = QWidget()
+        host.setObjectName("contentArea")
+        layout = QVBoxLayout(host)
         layout.setContentsMargins(28, 26, 28, 26)
         layout.setSpacing(16)
 
@@ -57,25 +89,23 @@ class SettingsPage(QWidget):
         title.setObjectName("pageTitle")
         layout.addWidget(title)
 
-        note = QLabel(
+        note = _wrap_label(
             "Personalize this computer’s look. Your organization logo appears in "
             "the sidebar — the MayleSoft app icon stays unchanged."
         )
-        note.setObjectName("muted")
-        note.setWordWrap(True)
         layout.addWidget(note)
 
         # ---- Theme color ----
-        theme_card = QFrame()
-        theme_card.setObjectName("panel")
+        theme_card = _panel()
         theme_layout = QVBoxLayout(theme_card)
         theme_layout.setContentsMargins(18, 16, 18, 16)
+        theme_layout.setSpacing(10)
         theme_heading = QLabel("Theme color")
         theme_heading.setObjectName("sectionTitle")
         theme_layout.addWidget(theme_heading)
-        theme_hint = QLabel("Accent color for buttons, highlights, and navigation.")
-        theme_hint.setObjectName("muted")
-        theme_layout.addWidget(theme_hint)
+        theme_layout.addWidget(
+            _wrap_label("Accent color for buttons, highlights, and navigation.")
+        )
 
         self.theme_group = QButtonGroup(self)
         theme_row = QHBoxLayout()
@@ -102,16 +132,16 @@ class SettingsPage(QWidget):
         layout.addWidget(theme_card)
 
         # ---- Day / night ----
-        mode_card = QFrame()
-        mode_card.setObjectName("panel")
+        mode_card = _panel()
         mode_layout = QVBoxLayout(mode_card)
         mode_layout.setContentsMargins(18, 16, 18, 16)
+        mode_layout.setSpacing(10)
         mode_heading = QLabel("Display mode")
         mode_heading.setObjectName("sectionTitle")
         mode_layout.addWidget(mode_heading)
-        mode_hint = QLabel("Day keeps a light workspace; Night uses a dark workspace.")
-        mode_hint.setObjectName("muted")
-        mode_layout.addWidget(mode_hint)
+        mode_layout.addWidget(
+            _wrap_label("Day keeps a light workspace; Night uses a dark workspace.")
+        )
 
         self.mode_group = QButtonGroup(self)
         mode_row = QHBoxLayout()
@@ -126,26 +156,28 @@ class SettingsPage(QWidget):
         layout.addWidget(mode_card)
 
         # ---- User / org logo ----
-        logo_card = QFrame()
-        logo_card.setObjectName("panel")
+        logo_card = _panel()
         logo_layout = QVBoxLayout(logo_card)
         logo_layout.setContentsMargins(18, 16, 18, 16)
+        logo_layout.setSpacing(10)
         logo_heading = QLabel("Organization logo")
         logo_heading.setObjectName("sectionTitle")
         logo_layout.addWidget(logo_heading)
-        logo_hint = QLabel(
-            "Shown in the sidebar under your session. This is your logo — "
-            "not the NGO Fundraising app icon."
+        logo_layout.addWidget(
+            _wrap_label(
+                "Shown in the sidebar under your session. This is your logo — "
+                "not the NGO Fundraising app icon."
+            )
         )
-        logo_hint.setObjectName("muted")
-        logo_hint.setWordWrap(True)
-        logo_layout.addWidget(logo_hint)
 
         preview_row = QHBoxLayout()
         self.logo_preview = QLabel("No organization logo")
         self.logo_preview.setObjectName("muted")
         self.logo_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.logo_preview.setMinimumSize(160, 100)
+        self.logo_preview.setFixedSize(160, 100)
+        self.logo_preview.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
         self.logo_preview.setStyleSheet(
             "border: 1px dashed #C5D0DE; border-radius: 10px; padding: 8px;"
         )
@@ -167,28 +199,32 @@ class SettingsPage(QWidget):
         layout.addWidget(logo_card)
 
         # ---- Data backup (admin) ----
-        backup_card = QFrame()
-        backup_card.setObjectName("panel")
+        backup_card = _panel()
         backup_layout = QVBoxLayout(backup_card)
         backup_layout.setContentsMargins(18, 16, 18, 16)
+        backup_layout.setSpacing(10)
         backup_heading = QLabel("Data backup")
         backup_heading.setObjectName("sectionTitle")
         backup_layout.addWidget(backup_heading)
-        self.backup_hint = QLabel(
-            "Export a copy of this computer’s database, or restore from a backup file. "
-            "Restore replaces current data and requires a restart."
+        self.backup_hint = _wrap_label(
+            "This install stores data on this PC only — there is no shared multi-PC "
+            "database in this version. Export a copy regularly, or restore from a "
+            "backup file (restore replaces current data and requires a restart)."
         )
-        self.backup_hint.setObjectName("muted")
-        self.backup_hint.setWordWrap(True)
         backup_layout.addWidget(self.backup_hint)
 
-        self.db_path_label = QLabel("")
-        self.db_path_label.setObjectName("muted")
-        self.db_path_label.setWordWrap(True)
+        self.db_path_label = _wrap_label("")
         self.db_path_label.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
         backup_layout.addWidget(self.db_path_label)
+
+        self.backup_on_exit_cb = QCheckBox(
+            "Write a local backup when quitting the app"
+        )
+        self.backup_on_exit_cb.setMinimumHeight(28)
+        self.backup_on_exit_cb.toggled.connect(self._on_backup_on_exit_toggled)
+        backup_layout.addWidget(self.backup_on_exit_cb)
 
         backup_row = QHBoxLayout()
         self.export_backup_btn = QPushButton("Export backup…")
@@ -205,10 +241,11 @@ class SettingsPage(QWidget):
         self.backup_card = backup_card
 
         # ---- About / install ----
-        about = QFrame()
-        about.setObjectName("panel")
+        about = _panel()
         about_layout = QFormLayout(about)
         about_layout.setContentsMargins(18, 16, 18, 16)
+        about_layout.setHorizontalSpacing(18)
+        about_layout.setVerticalSpacing(10)
         about_title = QLabel("About")
         about_title.setObjectName("sectionTitle")
         about_layout.addRow(about_title)
@@ -223,6 +260,7 @@ class SettingsPage(QWidget):
         layout.addWidget(about)
 
         layout.addStretch(1)
+        scroll.setWidget(host)
         self.refresh()
 
     def refresh(self):
@@ -239,6 +277,9 @@ class SettingsPage(QWidget):
         is_admin = current_session.is_admin
         self.backup_card.setVisible(is_admin)
         self.db_path_label.setText(f"Database file: {DATABASE_PATH}")
+        self.backup_on_exit_cb.blockSignals(True)
+        self.backup_on_exit_cb.setChecked(settings.backup_on_exit)
+        self.backup_on_exit_cb.blockSignals(False)
 
     def _refresh_logo_preview(self):
         path = user_logo_path()
@@ -253,8 +294,8 @@ class SettingsPage(QWidget):
         self.logo_preview.setText("")
         self.logo_preview.setPixmap(
             pix.scaled(
-                150,
-                90,
+                144,
+                84,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation,
             )
@@ -317,6 +358,11 @@ class SettingsPage(QWidget):
         self._refresh_logo_preview()
         self.appearance_changed.emit()
 
+    def _on_backup_on_exit_toggled(self, checked: bool):
+        settings = load_settings()
+        settings.backup_on_exit = bool(checked)
+        save_settings(settings)
+
     def _export_backup(self):
         if not current_session.is_admin:
             QMessageBox.warning(self, "Backup", "Administrator access required.")
@@ -340,7 +386,7 @@ class SettingsPage(QWidget):
             self,
             "Backup saved",
             f"Database copied to:\n{dest}\n\n"
-            f"Automatic migration backups also stay under:\n{APP_DIR}",
+            f"Local auto-backups (exit / upgrades) also stay under:\n{APP_DIR}",
         )
 
     def _restore_backup(self):

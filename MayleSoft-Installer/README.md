@@ -18,6 +18,8 @@ Requires a built app first:
 packaging\build_windows.bat
 ```
 
+This folder is the **canonical customer ship channel**. Legacy Inno Setup is not used.
+
 ## Build customer .exe
 
 ```bat

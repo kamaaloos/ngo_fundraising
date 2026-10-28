@@ -15,6 +15,11 @@ from app.auth.session import current_session
 from app.branding import COPYRIGHT_TEXT, app_icon, apply_windows_titlebar_theme
 from app.dialogs.license_dialog import LicenseDialog
 from app.licensing import get_license_status
+from app.db.database import (
+    days_since_last_backup,
+    export_database_backup,
+    local_backup_destination,
+)
 from app.db.repository import get_project
 from app.pages.donations import DonationsPage
 from app.pages.donors import DonorsPage
@@ -43,6 +48,7 @@ class MainWindow(QMainWindow):
         self._ending = False
         self._to_login = False
         self._frame_theme_applied = False
+        self._backup_reminder_shown = False
         self._fit_to_screen()
 
         root = QWidget()
@@ -174,6 +180,41 @@ class MainWindow(QMainWindow):
             self._sync_windows_titlebar()
             # Re-fit after native frame chrome is applied (packaged builds).
             self._fit_to_screen()
+        self._maybe_remind_backup()
+
+    def _maybe_remind_backup(self):
+        if self._backup_reminder_shown or not current_session.is_admin:
+            return
+        settings = load_settings()
+        days = days_since_last_backup()
+        threshold = settings.backup_reminder_days
+        if days is not None and days < threshold:
+            return
+        self._backup_reminder_shown = True
+        if days is None:
+            body = (
+                "No database backup has been recorded on this PC yet.\n\n"
+                "This version keeps data on one computer only. Export a backup "
+                "from Settings, or enable backup-on-exit."
+            )
+        else:
+            body = (
+                f"The last backup on this PC was about {days} day(s) ago.\n\n"
+                "Export a fresh copy from Settings → Data backup, or keep "
+                "backup-on-exit enabled."
+            )
+        QMessageBox.information(self, "Backup reminder", body)
+
+    def _run_exit_backup(self) -> None:
+        if not current_session.is_admin or self._to_login:
+            return
+        settings = load_settings()
+        if not settings.backup_on_exit:
+            return
+        try:
+            export_database_backup(local_backup_destination())
+        except Exception:
+            pass
 
     def _navigate(self, page_name: str):
         requires_project = {"Dashboard", "Donors", "Donations", "Expenses"}
@@ -259,6 +300,7 @@ class MainWindow(QMainWindow):
         try:
             if not self._ending:
                 self._ending = True
+                self._run_exit_backup()
                 to_login = self._to_login
                 current_session.clear()
                 self.session_ended.emit(to_login)

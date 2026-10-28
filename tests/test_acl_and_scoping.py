@@ -8,6 +8,8 @@ from app.db.access import AccessDenied
 from app.db.database import SessionLocal
 from app.db.models import Donation, Donor, Project, User
 from app.db.repository import (
+    find_donor_by_email_or_name,
+    find_or_create_donor,
     get_project,
     global_dashboard_stats,
     list_all_donors,
@@ -16,6 +18,11 @@ from app.db.repository import (
     save_donation,
     save_donor,
     save_project,
+)
+from app.io.importers import (
+    import_donors_from_file,
+    import_donors_linked_to_project,
+    import_projects_from_file,
 )
 
 
@@ -196,3 +203,100 @@ def test_save_donation_requires_project_access(admin_session):
                 "payment_method": "Cash",
             },
         )
+
+
+def test_save_donor_update_scoped(admin_session):
+    p1, p2, limited_id = _make_user_project_fixture(admin_session)
+    beta_only = save_donor(None, {"name": "Beta Only", "email": "beta-only@ex.org"})
+    save_donation(
+        None,
+        {
+            "donor_id": beta_only,
+            "project_id": p2,
+            "pledged_amount": Decimal("10"),
+            "paid_amount": Decimal("10"),
+            "payment_method": "Cash",
+        },
+    )
+
+    current_session.user_id = limited_id
+    current_session.username = "worker"
+    current_session.role = "user"
+    current_session.project_ids = [p1]
+
+    with pytest.raises(AccessDenied):
+        save_donor(beta_only, {"name": "Hacked", "email": "beta-only@ex.org"})
+
+    # Can still create a new donor.
+    new_id = save_donor(None, {"name": "Worker New", "email": "worker-new@ex.org"})
+    assert new_id > 0
+
+
+def test_find_donor_scoped_and_conflict(admin_session):
+    _p1, p2, limited_id = _make_user_project_fixture(admin_session)
+    beta_only = save_donor(None, {"name": "Secret Beta", "email": "secret-beta@ex.org"})
+    save_donation(
+        None,
+        {
+            "donor_id": beta_only,
+            "project_id": p2,
+            "pledged_amount": Decimal("5"),
+            "paid_amount": Decimal("5"),
+            "payment_method": "Cash",
+        },
+    )
+
+    current_session.user_id = limited_id
+    current_session.username = "worker"
+    current_session.role = "user"
+    current_session.project_ids = [_p1]
+
+    assert find_donor_by_email_or_name(email="secret-beta@ex.org") is None
+    assert (
+        find_donor_by_email_or_name(
+            email="secret-beta@ex.org", scoped=False
+        ).id
+        == beta_only
+    )
+
+    with pytest.raises(AccessDenied):
+        find_or_create_donor(
+            {"name": "Secret Beta", "email": "secret-beta@ex.org"}
+        )
+
+    reused_id, created = find_or_create_donor(
+        {"name": "Secret Beta", "email": "secret-beta@ex.org"},
+        allow_cross_project=True,
+    )
+    assert not created
+    assert reused_id == beta_only
+
+
+def test_import_acl_gates(admin_session, tmp_path):
+    p1, p2, limited_id = _make_user_project_fixture(admin_session)
+    donors_csv = tmp_path / "donors.csv"
+    donors_csv.write_text("name,email\nAda,ada@ex.org\n", encoding="utf-8")
+    projects_csv = tmp_path / "projects.csv"
+    projects_csv.write_text(
+        "name,target,status\nGamma,100,Active\n", encoding="utf-8"
+    )
+
+    current_session.user_id = limited_id
+    current_session.username = "worker"
+    current_session.role = "user"
+    current_session.project_ids = [p1]
+
+    with pytest.raises(AccessDenied):
+        import_donors_from_file(donors_csv)
+    with pytest.raises(AccessDenied):
+        import_projects_from_file(projects_csv)
+    with pytest.raises(AccessDenied):
+        import_donors_linked_to_project(donors_csv, p2)
+
+    # Assigned project: link import allowed.
+    created, reused, donations, warnings = import_donors_linked_to_project(
+        donors_csv, p1
+    )
+    assert created == 1
+    assert donations == 1
+    assert not warnings

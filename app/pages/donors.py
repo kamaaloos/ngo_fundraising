@@ -47,9 +47,9 @@ class DonorsPage(QWidget):
         top.addWidget(title)
         top.addStretch()
 
-        import_btn = QPushButton("Import donors")
-        import_btn.setObjectName("ghostButton")
-        import_btn.clicked.connect(self.import_donors)
+        self.import_btn = QPushButton("Import donors")
+        self.import_btn.setObjectName("ghostButton")
+        self.import_btn.clicked.connect(self.import_donors)
         self.link_import_btn = QPushButton("Import & link to project")
         self.link_import_btn.setObjectName("ghostButton")
         self.link_import_btn.clicked.connect(self.import_linked_to_project)
@@ -62,7 +62,7 @@ class DonorsPage(QWidget):
         add = QPushButton("+ Add donor")
         add.setObjectName("primaryButton")
         add.clicked.connect(self.add_donor)
-        top.addWidget(import_btn)
+        top.addWidget(self.import_btn)
         top.addWidget(self.link_import_btn)
         top.addWidget(export_xls)
         top.addWidget(export_pdf)
@@ -177,6 +177,7 @@ class DonorsPage(QWidget):
         admin = current_session.is_admin
         self.scope_combo.setVisible(admin)
         self.remove_btn.setVisible(admin)
+        self.import_btn.setVisible(admin)
         if hasattr(self, "_scope_label") and self._scope_label is not None:
             self._scope_label.setVisible(admin)
         if not admin:

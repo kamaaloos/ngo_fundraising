@@ -5,6 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
+from app.db.access import require_admin, require_project_access
 from app.db.models import PROJECT_STATUSES
 from app.db.repository import normalize_project_status
 from app.db.repository import (
@@ -111,6 +112,7 @@ DONATION_ALIASES = {
 
 def import_donors_from_file(path: str | Path) -> tuple[int, list[str]]:
     """Import global donors. Columns: name*, email, phone, address, notes."""
+    require_admin()
     rows = _read_rows(Path(path))
     created = 0
     warnings: list[str] = []
@@ -141,6 +143,7 @@ def import_projects_from_file(path: str | Path) -> tuple[int, list[str]]:
     Import projects.
     Columns: name*, description, target/target_amount/goal, status
     """
+    require_admin()
     rows = _read_rows(Path(path))
     created = 0
     warnings: list[str] = []
@@ -197,6 +200,7 @@ def import_donors_linked_to_project(
 
     Returns (donors_created, donors_reused, donations_created, warnings)
     """
+    require_project_access(project_id)
     project = get_project(project_id)
     if project is None:
         raise ValueError("Project not found")
@@ -222,7 +226,9 @@ def import_donors_linked_to_project(
         }
 
         try:
-            donor_id, created = find_or_create_donor(donor_values)
+            donor_id, created = find_or_create_donor(
+                donor_values, allow_cross_project=True
+            )
             if created:
                 donors_created += 1
             else:
@@ -288,6 +294,7 @@ def import_projects_with_donors_from_file(
 
     Returns (projects_created, donors_created, donations_created, warnings)
     """
+    require_admin()
     rows = _read_rows(Path(path))
     projects_created = 0
     donors_created = 0
@@ -342,7 +349,8 @@ def import_projects_with_donors_from_file(
                     "phone": _pick(row, DONOR_ALIASES["phone"]),
                     "address": _pick(row, DONOR_ALIASES["address"]),
                     "notes": _pick(row, DONOR_ALIASES["notes"]),
-                }
+                },
+                allow_cross_project=True,
             )
             if created:
                 donors_created += 1
