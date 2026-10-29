@@ -48,19 +48,19 @@ class DonorsPage(QWidget):
         top.addWidget(title)
         top.addStretch()
 
-        self.import_btn = QPushButton("Import donors")
+        self.import_btn = QPushButton(tr("donors.import"))
         self.import_btn.setObjectName("ghostButton")
         self.import_btn.clicked.connect(self.import_donors)
-        self.link_import_btn = QPushButton("Import & link to project")
+        self.link_import_btn = QPushButton(tr("donors.import_link"))
         self.link_import_btn.setObjectName("ghostButton")
         self.link_import_btn.clicked.connect(self.import_linked_to_project)
-        export_xls = QPushButton("Export Excel")
+        export_xls = QPushButton(tr("donors.export_excel"))
         export_xls.setObjectName("ghostButton")
         export_xls.clicked.connect(self.export_excel)
-        export_pdf = QPushButton("Export PDF")
+        export_pdf = QPushButton(tr("donors.export_pdf"))
         export_pdf.setObjectName("ghostButton")
         export_pdf.clicked.connect(self.export_pdf)
-        add = QPushButton("+ Add donor")
+        add = QPushButton(tr("donors.add"))
         add.setObjectName("primaryButton")
         add.clicked.connect(self.add_donor)
         top.addWidget(self.import_btn)
@@ -71,30 +71,26 @@ class DonorsPage(QWidget):
         layout.addLayout(top)
         self.link_import_btn.setEnabled(False)
 
-        note = QLabel(
-            "Import donors globally, or Import & link to project to attach them "
-            "(with optional pledged/paid) to the open project. "
-            "Click a card to select · double-click for details."
-        )
+        note = QLabel(tr("donors.note"))
         note.setObjectName("muted")
         note.setWordWrap(True)
         layout.addWidget(note)
 
         filters = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Search by name, email, or phone…")
+        self.search.setPlaceholderText(tr("donors.search_ph"))
         self.search.textChanged.connect(self._on_search_changed)
         filters.addWidget(self.search, 1)
 
-        filters.addWidget(QLabel("Show"))
+        filters.addWidget(QLabel(tr("donors.show")))
         self.scope_combo = QComboBox()
-        self.scope_combo.addItem("All donors", "all")
-        self.scope_combo.addItem("This project only", "project")
+        self.scope_combo.addItem(tr("donors.all"), "all")
+        self.scope_combo.addItem(tr("donors.this_project"), "project")
         self.scope_combo.currentIndexChanged.connect(self._reset_and_refresh)
         filters.addWidget(self.scope_combo)
         self._scope_label = filters.itemAt(filters.count() - 2).widget()
 
-        filters.addWidget(QLabel("Per page"))
+        filters.addWidget(QLabel(tr("donors.per_page")))
         self.page_size_combo = QComboBox()
         for size in (5, 10, 25, 50):
             self.page_size_combo.addItem(str(size), size)
@@ -116,18 +112,18 @@ class DonorsPage(QWidget):
         layout.addWidget(self.scroll, 1)
 
         pager = QHBoxLayout()
-        self.prev_btn = QPushButton("‹ Previous")
+        self.prev_btn = QPushButton(tr("common.previous"))
         self.prev_btn.clicked.connect(self.prev_page)
-        self.next_btn = QPushButton("Next ›")
+        self.next_btn = QPushButton(tr("common.next"))
         self.next_btn.clicked.connect(self.next_page)
-        self.page_label = QLabel("Page 1")
+        self.page_label = QLabel("")
         self.page_label.setObjectName("muted")
-        view = QPushButton("View details")
+        view = QPushButton(tr("donors.view_details"))
         view.setObjectName("primaryButton")
         view.clicked.connect(self.view_donor)
-        edit = QPushButton("Edit")
+        edit = QPushButton(tr("common.edit"))
         edit.clicked.connect(self.edit_donor)
-        self.remove_btn = QPushButton("Delete")
+        self.remove_btn = QPushButton(tr("common.delete"))
         self.remove_btn.setObjectName("dangerButton")
         self.remove_btn.clicked.connect(self.remove_donor)
         pager.addWidget(self.prev_btn)
@@ -212,7 +208,7 @@ class DonorsPage(QWidget):
         ):
             self._clear_list()
             self.list_layout.addStretch()
-            self.page_label.setText("Select a project first")
+            self.page_label.setText(tr("common.no_project_body"))
             self.prev_btn.setEnabled(False)
             self.next_btn.setEnabled(False)
             self._donors = []
@@ -239,7 +235,7 @@ class DonorsPage(QWidget):
         self._donors = donors
         self._clear_list()
         if not donors:
-            empty = QLabel("No donors yet. Add one or import from CSV/Excel.")
+            empty = QLabel(tr("donors.empty"))
             empty.setObjectName("muted")
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.list_layout.addWidget(empty)
@@ -253,7 +249,12 @@ class DonorsPage(QWidget):
         self.list_layout.addStretch()
 
         self.page_label.setText(
-            f"Page {self.page} of {max_page} · {total} donor(s)"
+            tr(
+                "donors.page",
+                page=self.page,
+                max_page=max_page,
+                total=total,
+            )
         )
         self.prev_btn.setEnabled(self.page > 1)
         self.next_btn.setEnabled(self.page < max_page)
@@ -278,13 +279,15 @@ class DonorsPage(QWidget):
     def view_donor(self, *_):
         donor_id = self._current_donor_id()
         if donor_id is None:
-            QMessageBox.information(self, "Select donor", "Click a donor card first.")
+            QMessageBox.information(
+                self, tr("donors.select_title"), tr("donors.select_body")
+            )
             return
         try:
             dialog = DonorDetailDialog(self, donor_id=donor_id)
             dialog.exec()
         except Exception as exc:
-            QMessageBox.critical(self, "Could not load donor", str(exc))
+            QMessageBox.critical(self, tr("donors.load_failed"), str(exc))
 
     def add_donor(self):
         dialog = DonorDialog(self)
@@ -294,12 +297,14 @@ class DonorsPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def edit_donor(self):
         donor_id = self._current_donor_id()
         if donor_id is None:
-            QMessageBox.information(self, "Select donor", "Click a donor card first.")
+            QMessageBox.information(
+                self, tr("donors.select_title"), tr("donors.select_body")
+            )
             return
         from app.db.repository import get_donor
 
@@ -313,21 +318,25 @@ class DonorsPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def remove_donor(self):
         if not current_session.is_admin:
-            QMessageBox.information(self, "Permission", "Only admin can delete donors.")
+            QMessageBox.information(
+                self, tr("common.permission"), tr("donors.permission_body")
+            )
             return
         donor_id = self._current_donor_id()
         if donor_id is None:
-            QMessageBox.information(self, "Select donor", "Click a donor card first.")
+            QMessageBox.information(
+                self, tr("donors.select_title"), tr("donors.select_body")
+            )
             return
         if (
             QMessageBox.question(
                 self,
-                "Confirm deletion",
-                "Delete this donor and ALL their donations across every project?",
+                tr("common.confirm_delete"),
+                tr("donors.confirm_body"),
             )
             != QMessageBox.StandardButton.Yes
         ):
@@ -338,7 +347,7 @@ class DonorsPage(QWidget):
             self.refresh()
             self._notify()
         except Exception as exc:
-            QMessageBox.critical(self, "Delete failed", str(exc))
+            QMessageBox.critical(self, tr("common.delete_failed"), str(exc))
 
     def _export_donors_dataset(self):
         donors, _total = list_donors(
@@ -359,7 +368,7 @@ class DonorsPage(QWidget):
     def import_donors(self):
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Import donors",
+            tr("donors.import"),
             "",
             "Spreadsheets (*.csv *.xlsx);;CSV (*.csv);;Excel (*.xlsx)",
         )
@@ -368,11 +377,11 @@ class DonorsPage(QWidget):
         try:
             created, warnings = import_donors_from_file(path)
         except Exception as exc:
-            QMessageBox.critical(self, "Import failed", str(exc))
+            QMessageBox.critical(self, tr("donors.import_failed"), str(exc))
             return
         self._show_import_result(
-            "Import complete",
-            f"Imported {created} donor(s).",
+            tr("donors.import_complete"),
+            tr("donors.imported_count", count=created),
             warnings,
         )
         self.refresh()
@@ -382,13 +391,13 @@ class DonorsPage(QWidget):
         if self.project_id is None:
             QMessageBox.information(
                 self,
-                "No project",
-                "Open a project first, then import donors linked to it.",
+                tr("common.no_project_title"),
+                tr("donors.import_link_body"),
             )
             return
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Import donors linked to this project",
+            tr("donors.import_link_title"),
             "",
             "Spreadsheets (*.csv *.xlsx);;CSV (*.csv);;Excel (*.xlsx)",
         )
@@ -399,14 +408,16 @@ class DonorsPage(QWidget):
                 path, self.project_id
             )
         except Exception as exc:
-            QMessageBox.critical(self, "Import failed", str(exc))
+            QMessageBox.critical(self, tr("donors.import_failed"), str(exc))
             return
         self._show_import_result(
-            "Import complete",
-            f"New donors: {created}\n"
-            f"Existing donors reused: {reused}\n"
-            f"Linked donations: {donations}\n\n"
-            "Columns: name, email, phone, pledged, paid, method, date, reference",
+            tr("donors.import_complete"),
+            tr(
+                "donors.import_link_result",
+                created=created,
+                reused=reused,
+                donations=donations,
+            ),
             warnings,
         )
         self.refresh()
@@ -415,11 +426,13 @@ class DonorsPage(QWidget):
     def export_excel(self):
         donors = self._export_donors_dataset()
         if not donors:
-            QMessageBox.information(self, "Export", "No donors to export.")
+            QMessageBox.information(
+                self, tr("donors.export_title"), tr("donors.export_empty")
+            )
             return
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Export Excel",
+            tr("donors.export_excel"),
             "donors.xlsx",
             "Excel (*.xlsx)",
         )
@@ -427,18 +440,24 @@ class DonorsPage(QWidget):
             return
         try:
             export_donors_xlsx(path, donors)
-            QMessageBox.information(self, "Export complete", f"Saved:\n{path}")
+            QMessageBox.information(
+                self,
+                tr("donors.export_complete"),
+                tr("donors.export_saved", path=path),
+            )
         except Exception as exc:
-            QMessageBox.critical(self, "Export failed", str(exc))
+            QMessageBox.critical(self, tr("donors.export_failed"), str(exc))
 
     def export_pdf(self):
         donors = self._export_donors_dataset()
         if not donors:
-            QMessageBox.information(self, "Export", "No donors to export.")
+            QMessageBox.information(
+                self, tr("donors.export_title"), tr("donors.export_empty")
+            )
             return
         path, _ = QFileDialog.getSaveFileName(
             self,
-            "Export PDF",
+            tr("donors.export_pdf"),
             "donors.pdf",
             "PDF (*.pdf)",
         )
@@ -446,6 +465,10 @@ class DonorsPage(QWidget):
             return
         try:
             export_donors_pdf(path, donors, title="NGO Fundraising — Donors")
-            QMessageBox.information(self, "Export complete", f"Saved:\n{path}")
+            QMessageBox.information(
+                self,
+                tr("donors.export_complete"),
+                tr("donors.export_saved", path=path),
+            )
         except Exception as exc:
-            QMessageBox.critical(self, "Export failed", str(exc))
+            QMessageBox.critical(self, tr("donors.export_failed"), str(exc))

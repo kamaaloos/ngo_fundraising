@@ -7,11 +7,13 @@ from PySide6.QtWidgets import (
     QTextEdit,
 )
 
+from app.i18n import tr
+
 
 class DonorDialog(QDialog):
     def __init__(self, parent=None, donor=None):
         super().__init__(parent)
-        self.setWindowTitle("Donor details")
+        self.setWindowTitle(tr("dialog.donor_title"))
         self.setMinimumWidth(420)
 
         layout = QFormLayout(self)
@@ -23,15 +25,19 @@ class DonorDialog(QDialog):
         self.notes = QTextEdit()
         self.notes.setMaximumHeight(70)
 
-        layout.addRow("Name *", self.name)
-        layout.addRow("Email", self.email)
-        layout.addRow("Phone", self.phone)
-        layout.addRow("Address", self.address)
-        layout.addRow("Notes", self.notes)
+        layout.addRow(tr("dialog.donor.name"), self.name)
+        layout.addRow(tr("dialog.donor.email"), self.email)
+        layout.addRow(tr("dialog.donor.phone"), self.phone)
+        layout.addRow(tr("dialog.donor.address"), self.address)
+        layout.addRow(tr("dialog.donor.notes"), self.notes)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.button(QDialogButtonBox.StandardButton.Save).setText(tr("common.save"))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(
+            tr("common.cancel")
         )
         buttons.accepted.connect(self.validate_and_accept)
         buttons.rejected.connect(self.reject)
@@ -46,7 +52,9 @@ class DonorDialog(QDialog):
 
     def validate_and_accept(self):
         if not self.name.text().strip():
-            QMessageBox.warning(self, "Validation", "Donor name is required.")
+            QMessageBox.warning(
+                self, tr("dialog.validation"), tr("dialog.donor.err_name")
+            )
             return
         self.accept()
 

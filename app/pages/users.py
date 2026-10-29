@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 from app.auth.session import current_session
 from app.db.repository import delete_user, list_projects, list_users, save_user
 from app.dialogs.user_dialog import UserDialog
-from app.i18n import tr
+from app.i18n import td, tr
 from app.widgets.table_page import fill_table, make_table, selected_id
 
 
@@ -28,31 +28,36 @@ class UsersPage(QWidget):
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()
-        add = QPushButton("+ Add user")
+        add = QPushButton(tr("users.add"))
         add.setObjectName("primaryButton")
         add.clicked.connect(self.add_user)
         top.addWidget(add)
         layout.addLayout(top)
 
-        note = QLabel(
-            "Admins access all projects. Project users may only work on projects you assign."
-        )
+        note = QLabel(tr("users.note"))
         note.setObjectName("muted")
         note.setWordWrap(True)
         layout.addWidget(note)
 
         self.table = make_table(
-            ["ID", "Username", "Full name", "Role", "Active", "Projects"]
+            [
+                tr("col.id"),
+                tr("col.username"),
+                tr("col.full_name"),
+                tr("col.role"),
+                tr("col.active"),
+                tr("col.projects"),
+            ]
         )
         layout.addWidget(self.table)
 
         controls = QHBoxLayout()
-        edit = QPushButton("Edit")
+        edit = QPushButton(tr("common.edit"))
         edit.clicked.connect(self.edit_user)
-        remove = QPushButton("Delete")
+        remove = QPushButton(tr("common.delete"))
         remove.setObjectName("dangerButton")
         remove.clicked.connect(self.remove_user)
-        refresh = QPushButton("Refresh")
+        refresh = QPushButton(tr("common.refresh"))
         refresh.clicked.connect(self.refresh)
         controls.addWidget(edit)
         controls.addWidget(remove)
@@ -71,9 +76,11 @@ class UsersPage(QWidget):
                     u.id,
                     u.username,
                     u.full_name or "",
-                    u.role,
-                    "Yes" if u.is_active else "No",
-                    "All" if u.role == "admin" else ", ".join(p.name for p in u.projects) or "—",
+                    td(u.role),
+                    td("Yes" if u.is_active else "No"),
+                    tr("common.all")
+                    if u.role == "admin"
+                    else ", ".join(p.name for p in u.projects) or "—",
                 )
                 for u in self._users
             ],
@@ -87,12 +94,14 @@ class UsersPage(QWidget):
                 save_user(None, dialog.values(), dialog.selected_project_ids())
                 self.refresh()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def edit_user(self):
         user_id = selected_id(self.table)
         if user_id is None:
-            QMessageBox.information(self, "Select user", "Select a user first.")
+            QMessageBox.information(
+                self, tr("users.select_title"), tr("users.select_body")
+            )
             return
         user = next((u for u in self._users if u.id == user_id), None)
         if user is None:
@@ -104,18 +113,24 @@ class UsersPage(QWidget):
                 save_user(user_id, dialog.values(), dialog.selected_project_ids())
                 self.refresh()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def remove_user(self):
         user_id = selected_id(self.table)
         if user_id is None:
-            QMessageBox.information(self, "Select user", "Select a user first.")
+            QMessageBox.information(
+                self, tr("users.select_title"), tr("users.select_body")
+            )
             return
         if user_id == current_session.user_id:
-            QMessageBox.warning(self, "Not allowed", "You cannot delete your own account while signed in.")
+            QMessageBox.warning(
+                self, tr("users.not_allowed"), tr("users.not_allowed_body")
+            )
             return
         if (
-            QMessageBox.question(self, "Confirm deletion", "Delete this user account?")
+            QMessageBox.question(
+                self, tr("common.confirm_delete"), tr("users.confirm_body")
+            )
             != QMessageBox.StandardButton.Yes
         ):
             return
@@ -123,4 +138,4 @@ class UsersPage(QWidget):
             delete_user(user_id)
             self.refresh()
         except Exception as exc:
-            QMessageBox.critical(self, "Delete failed", str(exc))
+            QMessageBox.critical(self, tr("common.delete_failed"), str(exc))

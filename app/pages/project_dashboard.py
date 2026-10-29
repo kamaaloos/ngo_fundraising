@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.db.repository import get_project, list_donations
+from app.i18n import td, tr
 from app.utils import money
 from app.widgets.stat_card import StatCard
 from app.widgets.table_page import fill_table, make_table
@@ -41,25 +42,40 @@ class ProjectDashboardPage(QWidget):
         layout.setContentsMargins(28, 26, 28, 26)
         layout.setSpacing(16)
 
-        self.title = QLabel("Project dashboard")
+        self.title = QLabel(tr("project_dashboard.title"))
         self.title.setObjectName("pageTitle")
         layout.addWidget(self.title)
 
-        self.subtitle = QLabel("Select a project to view its dashboard.")
+        self.subtitle = QLabel(tr("project_dashboard.select"))
         self.subtitle.setObjectName("muted")
         self.subtitle.setWordWrap(True)
         layout.addWidget(self.subtitle)
 
         cards = QHBoxLayout()
         cards.setSpacing(14)
-        self.card_target = StatCard("TARGET", "0.00", "Fundraising goal", accent="blue")
-        self.card_raised = StatCard("RAISED", "0.00", "Paid amount", accent="teal")
-        self.card_pledged = StatCard("PLEDGED", "0.00", "Committed amount", accent="violet")
+        self.card_target = StatCard(
+            tr("card.target"), "0.00", tr("card.target_hint"), accent="blue"
+        )
+        self.card_raised = StatCard(
+            tr("card.raised"), "0.00", tr("card.raised_paid_hint"), accent="teal"
+        )
+        self.card_pledged = StatCard(
+            tr("card.pledged"),
+            "0.00",
+            tr("card.pledged_committed_hint"),
+            accent="violet",
+        )
         self.card_outstanding = StatCard(
-            "OUTSTANDING", "0.00", "Pledged − paid", accent="amber"
+            tr("card.outstanding"),
+            "0.00",
+            tr("card.outstanding_owed_hint"),
+            accent="amber",
         )
         self.card_expenses = StatCard(
-            "EXPENSES", "0.00", "Project spend", accent="rose"
+            tr("card.expenses"),
+            "0.00",
+            tr("card.expenses_project_hint"),
+            accent="rose",
         )
         for card in (
             self.card_target,
@@ -77,7 +93,7 @@ class ProjectDashboardPage(QWidget):
         progress_layout.setContentsMargins(18, 16, 18, 16)
         progress_layout.setSpacing(10)
 
-        self.progress_label = QLabel("Fundraising progress")
+        self.progress_label = QLabel(tr("project_dashboard.progress"))
         self.progress_label.setObjectName("sectionTitle")
         progress_layout.addWidget(self.progress_label)
 
@@ -98,11 +114,11 @@ class ProjectDashboardPage(QWidget):
         recent_layout.setSpacing(12)
 
         recent_header = QHBoxLayout()
-        recent = QLabel("Recent donations")
+        recent = QLabel(tr("project_dashboard.recent"))
         recent.setObjectName("sectionTitle")
         recent_header.addWidget(recent)
         recent_header.addStretch()
-        recent_header.addWidget(QLabel("Per page"))
+        recent_header.addWidget(QLabel(tr("project_dashboard.per_page")))
         self.page_size_combo = QComboBox()
         for size in (5, 10, 25, 50):
             self.page_size_combo.addItem(str(size), size)
@@ -113,24 +129,24 @@ class ProjectDashboardPage(QWidget):
 
         self.table = make_table(
             [
-                "ID",
-                "Date",
-                "Donor",
-                "Pledged",
-                "Paid",
-                "Remaining",
-                "Method",
-                "Status",
+                tr("col.id"),
+                tr("col.date"),
+                tr("col.donor"),
+                tr("col.pledged"),
+                tr("col.paid"),
+                tr("col.remaining"),
+                tr("col.method"),
+                tr("col.status"),
             ]
         )
         recent_layout.addWidget(self.table)
 
         pager = QHBoxLayout()
-        self.prev_btn = QPushButton("‹ Previous")
+        self.prev_btn = QPushButton(tr("common.previous"))
         self.prev_btn.clicked.connect(self._prev_page)
-        self.next_btn = QPushButton("Next ›")
+        self.next_btn = QPushButton(tr("common.next"))
         self.next_btn.clicked.connect(self._next_page)
-        self.page_label = QLabel("Page 1")
+        self.page_label = QLabel("")
         self.page_label.setObjectName("muted")
         pager.addWidget(self.prev_btn)
         pager.addWidget(self.next_btn)
@@ -179,22 +195,27 @@ class ProjectDashboardPage(QWidget):
                     money(d.pledged_amount),
                     money(d.paid_amount),
                     money(d.remaining_amount),
-                    d.payment_method,
-                    d.status,
+                    td(d.payment_method),
+                    td(d.status),
                 )
                 for d in page_rows
             ],
         )
         self.page_label.setText(
-            f"Page {self._page} of {max_page} · {total} donation(s)"
+            tr(
+                "project_dashboard.page",
+                page=self._page,
+                max_page=max_page,
+                total=total,
+            )
         )
         self.prev_btn.setEnabled(self._page > 1)
         self.next_btn.setEnabled(self._page < max_page)
 
     def refresh(self):
         if self.project_id is None:
-            self.title.setText("Project dashboard")
-            self.subtitle.setText("Select a project to view its dashboard.")
+            self.title.setText(tr("project_dashboard.title"))
+            self.subtitle.setText(tr("project_dashboard.select"))
             self.card_target.set_value("0.00")
             self.card_raised.set_value("0.00")
             self.card_pledged.set_value("0.00")
@@ -209,7 +230,7 @@ class ProjectDashboardPage(QWidget):
 
         project = get_project(self.project_id)
         if project is None:
-            self.subtitle.setText("Project not found.")
+            self.subtitle.setText(tr("project_dashboard.not_found"))
             return
 
         outstanding = project.amount_pledged - project.amount_raised
@@ -219,22 +240,39 @@ class ProjectDashboardPage(QWidget):
         self.title.setText(project.name)
         self.subtitle.setText(
             project.description
-            or f"Status: {project.status} · Fund status: {project.fundraising_status}"
+            or tr(
+                "project_dashboard.status_line",
+                status=td(project.status),
+                fund_status=td(project.fundraising_status),
+            )
         )
-        self.card_target.set_value(money(project.target_amount), "Fundraising goal")
-        self.card_raised.set_value(money(project.amount_raised), "Paid amount")
-        self.card_pledged.set_value(money(project.amount_pledged), "Committed amount")
-        self.card_outstanding.set_value(money(outstanding), "Still owed by donors")
-        self.card_expenses.set_value(money(project.total_expenses), "Project spend")
+        self.card_target.set_value(money(project.target_amount), tr("card.target_hint"))
+        self.card_raised.set_value(
+            money(project.amount_raised), tr("card.raised_paid_hint")
+        )
+        self.card_pledged.set_value(
+            money(project.amount_pledged), tr("card.pledged_committed_hint")
+        )
+        self.card_outstanding.set_value(
+            money(outstanding), tr("card.outstanding_owed_hint")
+        )
+        self.card_expenses.set_value(
+            money(project.total_expenses), tr("card.expenses_project_hint")
+        )
 
         pct = int(round(project.progress_percent))
         self.progress_bar.setValue(pct)
         remaining_to_target = money(project.remaining_to_target)
         self.fund_status.setText(
-            f"{project.fundraising_status} · {pct}% of target · "
-            f"Remaining to target: {remaining_to_target} · "
-            f"Outstanding from donors: {money(outstanding)} · "
-            f"Donors: {project.unique_donor_count} · Donations: {project.donation_count}"
+            tr(
+                "project_dashboard.fund_line",
+                fund_status=td(project.fundraising_status),
+                pct=pct,
+                remaining=remaining_to_target,
+                outstanding=money(outstanding),
+                donors=project.unique_donor_count,
+                donations=project.donation_count,
+            )
         )
 
         self._donations = list_donations(self.project_id)

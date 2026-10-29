@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QApplication,
     QButtonGroup,
     QCheckBox,
-    QComboBox,
     QFileDialog,
     QFormLayout,
     QFrame,
@@ -33,7 +32,7 @@ from app.db.database import (
     export_database_backup,
     restore_database_backup,
 )
-from app.i18n import LANGUAGE_OPTIONS, restart_application, tr
+from app.i18n import restart_application, tr
 from app.settings_store import (
     THEME_PRESETS,
     clear_user_logo,
@@ -42,6 +41,7 @@ from app.settings_store import (
     set_user_logo,
     user_logo_path,
 )
+from app.widgets.language_switch import LanguageSwitch
 
 
 def _panel() -> QFrame:
@@ -94,7 +94,7 @@ class SettingsPage(QWidget):
         self.note_label = _wrap_label(tr("settings.note"))
         layout.addWidget(self.note_label)
 
-        # ---- Language ----
+        # ---- Language (EN / ع / SO — same pattern as the website) ----
         lang_card = _panel()
         lang_layout = QVBoxLayout(lang_card)
         lang_layout.setContentsMargins(18, 16, 18, 16)
@@ -105,13 +105,10 @@ class SettingsPage(QWidget):
         self.lang_hint = _wrap_label(tr("settings.language_hint"))
         lang_layout.addWidget(self.lang_hint)
 
-        self.language_combo = QComboBox()
-        self.language_combo.setMinimumHeight(36)
-        self.language_combo.setMaximumWidth(280)
-        for code, label in LANGUAGE_OPTIONS:
-            self.language_combo.addItem(label, code)
-        self.language_combo.currentIndexChanged.connect(self._on_language_changed)
-        lang_layout.addWidget(self.language_combo)
+        self.language_switch = LanguageSwitch()
+        self.language_switch.set_language(load_settings().language_key())
+        self.language_switch.language_changed.connect(self._on_language_changed)
+        lang_layout.addWidget(self.language_switch)
         layout.addWidget(lang_card)
 
         # ---- Theme color ----
@@ -277,10 +274,7 @@ class SettingsPage(QWidget):
     def refresh(self):
         settings = load_settings()
         self._updating_language = True
-        idx = self.language_combo.findData(settings.language_key())
-        if idx < 0:
-            idx = 0
-        self.language_combo.setCurrentIndex(idx)
+        self.language_switch.set_language(settings.language_key())
         self._updating_language = False
 
         for btn in self.theme_group.buttons():
@@ -338,17 +332,14 @@ class SettingsPage(QWidget):
         settings = load_settings()
         settings.theme = self._selected_theme()
         settings.mode = self._selected_mode()
-        settings.language = str(
-            self.language_combo.currentData() or settings.language_key()
-        )
+        settings.language = self.language_switch.current_language()
         settings.has_user_logo = user_logo_path() is not None
         save_settings(settings)
         self.appearance_changed.emit()
 
-    def _on_language_changed(self, _index: int):
+    def _on_language_changed(self, code: str):
         if self._updating_language:
             return
-        code = str(self.language_combo.currentData() or "en")
         settings = load_settings()
         if code == settings.language_key():
             return

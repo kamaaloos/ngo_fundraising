@@ -15,7 +15,7 @@ from app.auth.session import current_session
 from app.db.models import PROJECT_STATUSES
 from app.db.repository import delete_project, list_projects, save_project
 from app.dialogs.project_dialog import ProjectDialog
-from app.i18n import tr
+from app.i18n import td, tr
 from app.io.importers import (
     import_projects_from_file,
     import_projects_with_donors_from_file,
@@ -45,13 +45,13 @@ class ProjectsPage(QWidget):
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()
-        self.import_btn = QPushButton("Import file")
+        self.import_btn = QPushButton(tr("projects.import"))
         self.import_btn.setObjectName("ghostButton")
         self.import_btn.clicked.connect(self.import_projects)
-        self.import_linked_btn = QPushButton("Import projects + donors")
+        self.import_linked_btn = QPushButton(tr("projects.import_linked"))
         self.import_linked_btn.setObjectName("ghostButton")
         self.import_linked_btn.clicked.connect(self.import_projects_with_donors)
-        self.add_btn = QPushButton("+ New project")
+        self.add_btn = QPushButton(tr("projects.add"))
         self.add_btn.setObjectName("primaryButton")
         self.add_btn.clicked.connect(self.add_project)
         top.addWidget(self.import_btn)
@@ -59,27 +59,23 @@ class ProjectsPage(QWidget):
         top.addWidget(self.add_btn)
         layout.addLayout(top)
 
-        note = QLabel(
-            "Import projects alone, or import a sheet that creates projects and "
-            "links donors in one go. Finished campaigns should be set to "
-            "Archived (Completed is archived automatically)."
-        )
+        note = QLabel(tr("projects.note"))
         note.setObjectName("muted")
         note.setWordWrap(True)
         layout.addWidget(note)
 
         filters = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Search by name or description…")
+        self.search.setPlaceholderText(tr("projects.search_ph"))
         self.search.textChanged.connect(self._on_search_changed)
         filters.addWidget(self.search, 1)
 
-        filters.addWidget(QLabel("Status"))
+        filters.addWidget(QLabel(tr("projects.status_filter")))
         self.status_combo = QComboBox()
-        self.status_combo.addItem("Current (hide archived)", "__current__")
-        self.status_combo.addItem("All statuses", "")
+        self.status_combo.addItem(tr("projects.current"), "__current__")
+        self.status_combo.addItem(tr("projects.all_statuses"), "")
         for status in PROJECT_STATUSES:
-            self.status_combo.addItem(status, status)
+            self.status_combo.addItem(td(status), status)
         self.status_combo.currentIndexChanged.connect(self.refresh)
         filters.addWidget(self.status_combo)
         layout.addLayout(filters)
@@ -89,20 +85,28 @@ class ProjectsPage(QWidget):
         layout.addWidget(self.result_label)
 
         self.table = make_table(
-            ["ID", "Name", "Target", "Raised", "Expenses", "Fund status", "Status"]
+            [
+                tr("col.id"),
+                tr("col.name"),
+                tr("col.target"),
+                tr("col.raised"),
+                tr("col.expenses"),
+                tr("col.fund_status"),
+                tr("col.status"),
+            ]
         )
         self.table.doubleClicked.connect(self._open_selected)
         layout.addWidget(self.table)
 
         controls = QHBoxLayout()
-        open_btn = QPushButton("Open dashboard")
+        open_btn = QPushButton(tr("projects.open_dashboard"))
         open_btn.clicked.connect(self._open_selected)
-        self.edit_btn = QPushButton("Edit")
+        self.edit_btn = QPushButton(tr("common.edit"))
         self.edit_btn.clicked.connect(self.edit_project)
-        self.remove_btn = QPushButton("Delete")
+        self.remove_btn = QPushButton(tr("common.delete"))
         self.remove_btn.setObjectName("dangerButton")
         self.remove_btn.clicked.connect(self.remove_project)
-        refresh = QPushButton("Refresh")
+        refresh = QPushButton(tr("common.refresh"))
         refresh.clicked.connect(self.refresh)
         controls.addWidget(open_btn)
         controls.addWidget(self.edit_btn)
@@ -147,13 +151,13 @@ class ProjectsPage(QWidget):
                     money(p.target_amount),
                     money(p.amount_raised),
                     money(p.total_expenses),
-                    p.fundraising_status,
-                    p.status,
+                    td(p.fundraising_status),
+                    td(p.status),
                 )
                 for p in self._projects
             ],
         )
-        self.result_label.setText(f"{len(self._projects)} project(s)")
+        self.result_label.setText(tr("projects.count", count=len(self._projects)))
         self.add_btn.setVisible(current_session.is_admin)
         self.import_btn.setVisible(current_session.is_admin)
         self.import_linked_btn.setVisible(current_session.is_admin)
@@ -172,7 +176,7 @@ class ProjectsPage(QWidget):
             return
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Import projects",
+            tr("projects.import"),
             "",
             "Spreadsheets (*.csv *.xlsx);;CSV (*.csv);;Excel (*.xlsx)",
         )
@@ -181,10 +185,10 @@ class ProjectsPage(QWidget):
         try:
             created, warnings = import_projects_from_file(path)
         except Exception as exc:
-            QMessageBox.critical(self, "Import failed", str(exc))
+            QMessageBox.critical(self, tr("donors.import_failed"), str(exc))
             return
         self._show_import_result(
-            "Import complete",
+            tr("donors.import_complete"),
             f"Created {created} project(s).\n\n"
             "Columns: name, description, target (or goal), status",
             warnings,
@@ -197,7 +201,7 @@ class ProjectsPage(QWidget):
             return
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Import projects with donors",
+            tr("projects.import_linked"),
             "",
             "Spreadsheets (*.csv *.xlsx);;CSV (*.csv);;Excel (*.xlsx)",
         )
@@ -208,10 +212,10 @@ class ProjectsPage(QWidget):
                 path
             )
         except Exception as exc:
-            QMessageBox.critical(self, "Import failed", str(exc))
+            QMessageBox.critical(self, tr("donors.import_failed"), str(exc))
             return
         self._show_import_result(
-            "Import complete",
+            tr("donors.import_complete"),
             f"Projects created: {projects}\n"
             f"Donors created: {donors}\n"
             f"Donations linked: {donations}\n\n"
@@ -232,15 +236,19 @@ class ProjectsPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def edit_project(self):
         if not current_session.is_admin:
-            QMessageBox.information(self, "Permission", "Only admin can edit projects.")
+            QMessageBox.information(
+                self, tr("common.permission"), tr("projects.permission_edit")
+            )
             return
         project_id = selected_id(self.table)
         if project_id is None:
-            QMessageBox.information(self, "Select project", "Select a project first.")
+            QMessageBox.information(
+                self, tr("projects.select_title"), tr("projects.select_body")
+            )
             return
         project = next((p for p in self._projects if p.id == project_id), None)
         if project is None:
@@ -252,22 +260,25 @@ class ProjectsPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def remove_project(self):
         if not current_session.is_admin:
-            QMessageBox.information(self, "Permission", "Only admin can delete projects.")
+            QMessageBox.information(
+                self, tr("common.permission"), tr("projects.permission_delete")
+            )
             return
         project_id = selected_id(self.table)
         if project_id is None:
-            QMessageBox.information(self, "Select project", "Select a project first.")
+            QMessageBox.information(
+                self, tr("projects.select_title"), tr("projects.select_body")
+            )
             return
         if (
             QMessageBox.question(
                 self,
-                "Confirm deletion",
-                "Delete this project and its donations and expenses?\n"
-                "Donors themselves are kept (they may give to other projects).",
+                tr("common.confirm_delete"),
+                tr("projects.confirm_body"),
             )
             != QMessageBox.StandardButton.Yes
         ):
@@ -279,4 +290,4 @@ class ProjectsPage(QWidget):
             self.refresh()
             self._notify()
         except Exception as exc:
-            QMessageBox.critical(self, "Delete failed", str(exc))
+            QMessageBox.critical(self, tr("common.delete_failed"), str(exc))

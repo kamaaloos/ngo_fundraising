@@ -154,13 +154,20 @@ def logo_label(
     label = QLabel()
     label.setObjectName(object_name)
     label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    pix = logo_pixmap(max_width, max_height)
-    if not pix.isNull():
-        label.setPixmap(pix)
-        label.setToolTip("NGO Fundraising")
-    else:
-        label.setText("NGO Fundraising")
+    apply_app_logo(label, max_width, max_height)
     return label
+
+
+def apply_app_logo(label: QLabel, max_width: int, max_height: int) -> None:
+    """Scale the MayleSoft / app mark into an existing QLabel."""
+    pix = logo_pixmap(max_width, max_height)
+    if pix.isNull():
+        label.setText("NGO Fundraising")
+        return
+    label.setPixmap(pix)
+    label.setToolTip("NGO Fundraising")
+    label.setMinimumSize(0, 0)
+    label.setMaximumSize(max_width + 8, max_height + 8)
 
 
 def user_logo_pixmap(max_width: int = 160, max_height: int = 72) -> QPixmap:

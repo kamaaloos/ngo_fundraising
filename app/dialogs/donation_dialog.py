@@ -20,14 +20,9 @@ from PySide6.QtWidgets import (
 from app.auth.session import current_session
 from app.db.models import PAYMENT_METHODS, compute_donation_status
 from app.db.repository import list_collector_choices
+from app.i18n import td, tr
 from app.utils import money
 from app.widgets.date_edit import make_date_edit
-
-REFERENCE_HELP = (
-    "Optional payment tracking ID — for example a bank transfer number, "
-    "cheque number, mobile-money transaction ID, or receipt/voucher code. "
-    "It does not affect totals or status; leave blank if unused."
-)
 
 
 def _label_with_info(text: str, tip: str) -> QWidget:
@@ -60,7 +55,9 @@ class DonationDialog(QDialog):
     ):
         super().__init__(parent)
         self.setWindowTitle(
-            "Record payment" if focus_payment and donation else "Donation details"
+            tr("dialog.donation_payment_title")
+            if focus_payment and donation
+            else tr("dialog.donation_title")
         )
         self.setMinimumWidth(480)
         donors = donors or []
@@ -75,7 +72,7 @@ class DonationDialog(QDialog):
         self.donor = QComboBox()
         self.donor.setEditable(True)
         self.donor.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-        self.donor.lineEdit().setPlaceholderText("Search donor by name…")
+        self.donor.lineEdit().setPlaceholderText(tr("dialog.donation.donor_ph"))
         for item in donors:
             label = item.name
             if item.email:
@@ -97,26 +94,27 @@ class DonationDialog(QDialog):
         self.add_payment.setRange(0, 1_000_000_000)
         self.add_payment.setDecimals(2)
         self.add_payment.setSingleStep(10)
-        self.add_payment.setToolTip(
-            "Amount received now — added on top of what is already paid."
-        )
+        self.add_payment.setToolTip(tr("dialog.donation.add_payment_tip"))
 
         self.remaining_label = QLabel("0.00")
         self.remaining_label.setObjectName("muted")
 
-        self.status_label = QLabel("Pending")
+        self.status_label = QLabel(td("Pending"))
         self.status_label.setObjectName("badge")
 
         self.donation_date = make_date_edit()
         self.donation_date.setDate(QDate.currentDate())
 
         self.payment_method = QComboBox()
-        self.payment_method.addItems(list(PAYMENT_METHODS))
+        for method in PAYMENT_METHODS:
+            self.payment_method.addItem(td(method), method)
 
         self.collected_by = QComboBox()
         self.collected_by.setEditable(True)
         self.collected_by.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
-        self.collected_by.lineEdit().setPlaceholderText("Search staff who collected…")
+        self.collected_by.lineEdit().setPlaceholderText(
+            tr("dialog.donation.collected_ph")
+        )
         self._collectors = list_collector_choices()
         for user in self._collectors:
             label = user.display_name
@@ -125,16 +123,21 @@ class DonationDialog(QDialog):
             self.collected_by.addItem(label, user.id)
         self.collected_by.setCurrentIndex(-1)
 
+        ref_help = tr("dialog.donation.reference_help")
         self.reference = QLineEdit()
-        self.reference.setPlaceholderText("e.g. bank slip / cheque / M-Pesa ID")
-        self.reference.setToolTip(REFERENCE_HELP)
+        self.reference.setPlaceholderText(tr("dialog.donation.reference_ph"))
+        self.reference.setToolTip(ref_help)
         self.notes = QTextEdit()
         self.notes.setMaximumHeight(70)
 
-        layout.addRow("Donor *", self.donor)
-        layout.addRow("Raised / pledged *", self.pledged)
+        layout.addRow(tr("dialog.donation.donor"), self.donor)
+        layout.addRow(tr("dialog.donation.pledged"), self.pledged)
 
-        self._paid_label = "Paid amount" if donation is None else "Already paid"
+        self._paid_label = (
+            tr("dialog.donation.paid")
+            if donation is None
+            else tr("dialog.donation.already_paid")
+        )
         layout.addRow(self._paid_label, self.paid)
 
         self.pay_row = QWidget()
@@ -142,21 +145,24 @@ class DonationDialog(QDialog):
         pay_layout.setContentsMargins(0, 0, 0, 0)
         pay_layout.setSpacing(8)
         pay_layout.addWidget(self.add_payment, 1)
-        self.pay_remaining_btn = QPushButton("Pay remaining")
+        self.pay_remaining_btn = QPushButton(tr("dialog.donation.pay_remaining"))
         self.pay_remaining_btn.setObjectName("primaryButton")
-        self.pay_remaining_btn.setToolTip("Set this payment to the outstanding balance.")
+        self.pay_remaining_btn.setToolTip(tr("dialog.donation.pay_remaining_tip"))
         self.pay_remaining_btn.clicked.connect(self._pay_remaining)
         pay_layout.addWidget(self.pay_remaining_btn)
-        self._pay_row_label = QLabel("This payment")
+        self._pay_row_label = QLabel(tr("dialog.donation.this_payment"))
         layout.addRow(self._pay_row_label, self.pay_row)
 
-        layout.addRow("Still outstanding", self.remaining_label)
-        layout.addRow("Status after save", self.status_label)
-        layout.addRow("Payment method", self.payment_method)
-        layout.addRow("Collected by *", self.collected_by)
-        layout.addRow("Date", self.donation_date)
-        layout.addRow(_label_with_info("Reference", REFERENCE_HELP), self.reference)
-        layout.addRow("Notes", self.notes)
+        layout.addRow(tr("dialog.donation.outstanding"), self.remaining_label)
+        layout.addRow(tr("dialog.donation.status_after"), self.status_label)
+        layout.addRow(tr("dialog.donation.method"), self.payment_method)
+        layout.addRow(tr("dialog.donation.collected_by"), self.collected_by)
+        layout.addRow(tr("dialog.donation.date"), self.donation_date)
+        layout.addRow(
+            _label_with_info(tr("dialog.donation.reference"), ref_help),
+            self.reference,
+        )
+        layout.addRow(tr("dialog.donation.notes"), self.notes)
 
         self.pledged.valueChanged.connect(self._on_amounts_changed)
         self.paid.valueChanged.connect(self._on_amounts_changed)
@@ -165,6 +171,10 @@ class DonationDialog(QDialog):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.button(QDialogButtonBox.StandardButton.Save).setText(tr("common.save"))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(
+            tr("common.cancel")
         )
         buttons.accepted.connect(self.validate_and_accept)
         buttons.rejected.connect(self.reject)
@@ -193,7 +203,11 @@ class DonationDialog(QDialog):
             self.add_payment.setValue(float(remaining) if focus_payment else 0.0)
             d = donation.donation_date
             self.donation_date.setDate(QDate(d.year, d.month, d.day))
-            self.payment_method.setCurrentText(donation.payment_method)
+            method_idx = self.payment_method.findData(donation.payment_method)
+            if method_idx < 0:
+                method_idx = self.payment_method.findText(donation.payment_method)
+            if method_idx >= 0:
+                self.payment_method.setCurrentIndex(method_idx)
             collector_id = getattr(donation, "collected_by_user_id", None)
             self._select_collector(collector_id)
             self.reference.setText(donation.reference or "")
@@ -264,30 +278,36 @@ class DonationDialog(QDialog):
         if remaining_after < 0:
             remaining_after = Decimal("0")
         self.remaining_label.setText(money(remaining_after))
-        self.status_label.setText(compute_donation_status(pledged, paid_after))
+        self.status_label.setText(td(compute_donation_status(pledged, paid_after)))
 
     def validate_and_accept(self):
         donor_id = self._locked_donor_id
         if donor_id is None:
             donor_id = self.donor.currentData()
         if donor_id is None:
-            QMessageBox.warning(self, "Validation", "Select a donor from the list.")
+            QMessageBox.warning(
+                self, tr("dialog.validation"), tr("dialog.donation.err_donor")
+            )
             return
         if self.pledged.value() <= 0:
-            QMessageBox.warning(self, "Validation", "Pledged amount must be positive.")
+            QMessageBox.warning(
+                self, tr("dialog.validation"), tr("dialog.donation.err_pledged")
+            )
             return
         paid_after = self._total_paid_after()
         if paid_after > Decimal(str(self.pledged.value())):
             QMessageBox.warning(
-                self, "Validation", "Total paid cannot exceed pledged amount."
+                self, tr("dialog.validation"), tr("dialog.donation.err_paid")
             )
             return
         if self.project_id is None:
-            QMessageBox.warning(self, "Validation", "No project selected.")
+            QMessageBox.warning(
+                self, tr("dialog.validation"), tr("dialog.donation.err_project")
+            )
             return
         if self.collected_by.currentData() is None:
             QMessageBox.warning(
-                self, "Validation", "Select who collected this donation."
+                self, tr("dialog.validation"), tr("dialog.donation.err_collector")
             )
             return
         self._locked_donor_id = int(donor_id)
@@ -300,6 +320,7 @@ class DonationDialog(QDialog):
         donor_id = self._locked_donor_id
         if donor_id is None:
             donor_id = self.donor.currentData()
+        method = self.payment_method.currentData() or self.payment_method.currentText()
         return {
             "donor_id": int(donor_id),
             "project_id": self.project_id,
@@ -307,7 +328,7 @@ class DonationDialog(QDialog):
             "paid_amount": paid,
             "status": compute_donation_status(pledged, paid),
             "donation_date": date(qdate.year(), qdate.month(), qdate.day()),
-            "payment_method": self.payment_method.currentText(),
+            "payment_method": method,
             "collected_by_user_id": int(self.collected_by.currentData()),
             "reference": self.reference.text().strip(),
             "notes": self.notes.toPlainText().strip(),

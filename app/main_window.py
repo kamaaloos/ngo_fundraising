@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import (
     QApplication,
@@ -69,10 +69,14 @@ class MainWindow(QMainWindow):
         self.page_keys: list[str] = []
         self._build_pages()
         self._configure_nav()
-        self.refresh_all()
+        # Defer data refresh so the shell paints immediately after login
+        # (avoids a blank gap while every page queries the database).
+        QTimer.singleShot(0, self.refresh_all)
         self.statusBar().showMessage(tr("common.ready"))
         lic = get_license_status()
-        self._license_btn = QPushButton(lic.message if lic.expires_on else "License")
+        self._license_btn = QPushButton(
+            lic.message if lic.expires_on else tr("main.license")
+        )
         self._license_btn.setObjectName("loginForgotLink")
         self._license_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self._license_btn.setFlat(True)
@@ -85,12 +89,14 @@ class MainWindow(QMainWindow):
     def _open_license_dialog(self):
         LicenseDialog(self, blocking=False).exec()
         lic = get_license_status()
-        self._license_btn.setText(lic.message if lic.expires_on else "License")
+        self._license_btn.setText(
+            lic.message if lic.expires_on else tr("main.license")
+        )
         if not lic.valid:
             QMessageBox.warning(
                 self,
-                "License expired",
-                lic.message + "\n\nThe app will close after you sign out.",
+                tr("main.license_expired"),
+                tr("main.license_expired_body", message=lic.message),
             )
 
     def _build_pages(self):
@@ -179,9 +185,10 @@ class MainWindow(QMainWindow):
             self._frame_theme_applied = True
             # winId is valid after the native window exists.
             self._sync_windows_titlebar()
-            # Re-fit after native frame chrome is applied (packaged builds).
-            self._fit_to_screen()
-        self._maybe_remind_backup()
+            # One deferred re-fit after frame chrome (avoids a visible jump/gap).
+            QTimer.singleShot(0, self._fit_to_screen)
+        # Backup prompt after the window is fully on screen.
+        QTimer.singleShot(150, self._maybe_remind_backup)
 
     def _maybe_remind_backup(self):
         if self._backup_reminder_shown or not current_session.is_admin:
@@ -218,8 +225,8 @@ class MainWindow(QMainWindow):
         if page_name in requires_project and current_session.current_project_id is None:
             QMessageBox.information(
                 self,
-                "Select a project",
-                "Open a project from Overview or Projects first.",
+                tr("main.select_project_title"),
+                tr("main.select_project_body"),
             )
             self.sidebar.select_page("Overview")
             page_name = "Overview"
@@ -239,13 +246,17 @@ class MainWindow(QMainWindow):
     def open_project(self, project_id: int):
         if not current_session.can_access_project(project_id):
             QMessageBox.warning(
-                self, "Access denied", "You are not assigned to this project."
+                self,
+                tr("main.access_denied"),
+                tr("main.access_denied_body"),
             )
             return
 
         project = get_project(project_id)
         if project is None:
-            QMessageBox.warning(self, "Not found", "Project no longer exists.")
+            QMessageBox.warning(
+                self, tr("main.not_found"), tr("main.not_found_body")
+            )
             return
 
         current_session.current_project_id = project_id
@@ -255,7 +266,9 @@ class MainWindow(QMainWindow):
         self.donations_page.set_project(project_id)
         self.expenses_page.set_project(project_id)
         self.reports_page.set_project(project_id)
-        self.statusBar().showMessage(f"Working on: {project.name}", 4000)
+        self.statusBar().showMessage(
+            tr("main.working_on", name=project.name), 4000
+        )
         self._navigate("Dashboard")
 
     def refresh_project_views(self):

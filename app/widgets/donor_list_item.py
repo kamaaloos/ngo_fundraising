@@ -1,6 +1,7 @@
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout
 
+from app.i18n import tr
 from app.utils import money
 from app.widgets.avatar import AvatarWidget
 from app.widgets.hover_frame import HoverFrame
@@ -31,7 +32,9 @@ class DonorListItem(HoverFrame):
         name = QLabel(donor.name)
         name.setObjectName("listTitle")
         meta_bits = [b for b in (donor.email or "", donor.phone or "") if b]
-        meta = QLabel(" · ".join(meta_bits) if meta_bits else "No contact details")
+        meta = QLabel(
+            " · ".join(meta_bits) if meta_bits else tr("donor_item.no_contact")
+        )
         meta.setObjectName("listMeta")
         text_col.addWidget(name)
         text_col.addWidget(meta)
@@ -43,14 +46,14 @@ class DonorListItem(HoverFrame):
 
         amounts = QHBoxLayout()
         amounts.setSpacing(0)
-        pledged = QLabel(f"Pledged {money(donor.total_pledged)}  ·  ")
+        pledged = QLabel(tr("donor_item.pledged", amount=money(donor.total_pledged)))
         pledged.setObjectName("listMeta")
-        paid = QLabel(f"Paid {money(donor.total_paid)}")
+        paid = QLabel(tr("donor_item.paid", amount=money(donor.total_paid)))
         paid.setObjectName("paidLink")
         paid.setCursor(Qt.CursorShape.PointingHandCursor)
-        paid.setToolTip("View payment history — dates, methods, received by…")
+        paid.setToolTip(tr("donor_item.paid_tip"))
         paid.mousePressEvent = self._on_paid_pressed  # type: ignore[method-assign]
-        left = QLabel(f"  ·  Left {money(donor.total_remaining)}")
+        left = QLabel(tr("donor_item.left", amount=money(donor.total_remaining)))
         left.setObjectName("listMeta")
         amounts.addWidget(pledged)
         amounts.addWidget(paid)
@@ -58,7 +61,11 @@ class DonorListItem(HoverFrame):
         stats.addLayout(amounts)
 
         projects = QLabel(
-            f"{len(donor.project_ids)} project(s) · {len(donor.donations)} donation(s)"
+            tr(
+                "donor_item.counts",
+                projects=len(donor.project_ids),
+                donations=len(donor.donations),
+            )
         )
         projects.setObjectName("badge")
         projects.setAlignment(Qt.AlignmentFlag.AlignRight)

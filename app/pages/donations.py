@@ -21,7 +21,7 @@ from app.db.repository import (
 )
 from app.dialogs.collector_donations_dialog import CollectorDonationsDialog
 from app.dialogs.donation_dialog import DonationDialog
-from app.i18n import tr
+from app.i18n import td, tr
 from app.utils import money
 from app.widgets.table_page import fill_table, make_table, selected_id
 
@@ -47,32 +47,26 @@ class DonationsPage(QWidget):
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()
-        add = QPushButton("+ Record donation")
+        add = QPushButton(tr("donations.record"))
         add.setObjectName("primaryButton")
         add.clicked.connect(self.add_donation)
         top.addWidget(add)
         layout.addLayout(top)
 
-        note = QLabel(
-            "Any registered donor can donate to this project. "
-            "Record who collected each gift, then search by collector. "
-            "Flow: pledged → collected by → payment → status."
-        )
+        note = QLabel(tr("donations.note"))
         note.setObjectName("muted")
         note.setWordWrap(True)
         layout.addWidget(note)
 
         filters = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText(
-            "Search donor, collector, status, method, reference, notes…"
-        )
+        self.search.setPlaceholderText(tr("donations.search_ph"))
         self.search.textChanged.connect(self._on_search_changed)
         filters.addWidget(self.search, 1)
 
-        filters.addWidget(QLabel("Collected by"))
+        filters.addWidget(QLabel(tr("donations.collected_by")))
         self.collector_filter = QComboBox()
-        self.collector_filter.addItem("All collectors", None)
+        self.collector_filter.addItem(tr("donations.all_collectors"), None)
         for user in list_collector_choices():
             label = user.display_name
             if user.username and user.username.lower() != label.lower():
@@ -81,23 +75,23 @@ class DonationsPage(QWidget):
         self.collector_filter.currentIndexChanged.connect(self._apply_view)
         filters.addWidget(self.collector_filter)
 
-        filters.addWidget(QLabel("Sort by"))
+        filters.addWidget(QLabel(tr("donations.sort_by")))
         self.sort_combo = QComboBox()
-        for label, key in (
-            ("Date · newest", "date_desc"),
-            ("Date · oldest", "date_asc"),
-            ("Donor A–Z", "donor_asc"),
-            ("Donor Z–A", "donor_desc"),
-            ("Collector A–Z", "collector_asc"),
-            ("Pledged · high–low", "pledged_desc"),
-            ("Pledged · low–high", "pledged_asc"),
-            ("Paid · high–low", "paid_desc"),
-            ("Paid · low–high", "paid_asc"),
-            ("Remaining · high–low", "remaining_desc"),
-            ("Status", "status_asc"),
-            ("Method", "method_asc"),
+        for key, sort_key in (
+            ("donations.sort.date_desc", "date_desc"),
+            ("donations.sort.date_asc", "date_asc"),
+            ("donations.sort.donor_asc", "donor_asc"),
+            ("donations.sort.donor_desc", "donor_desc"),
+            ("donations.sort.collector_asc", "collector_asc"),
+            ("donations.sort.pledged_desc", "pledged_desc"),
+            ("donations.sort.pledged_asc", "pledged_asc"),
+            ("donations.sort.paid_desc", "paid_desc"),
+            ("donations.sort.paid_asc", "paid_asc"),
+            ("donations.sort.remaining_desc", "remaining_desc"),
+            ("donations.sort.status", "status_asc"),
+            ("donations.sort.method", "method_asc"),
         ):
-            self.sort_combo.addItem(label, key)
+            self.sort_combo.addItem(tr(key), sort_key)
         self.sort_combo.currentIndexChanged.connect(self._apply_view)
         filters.addWidget(self.sort_combo)
         layout.addLayout(filters)
@@ -108,41 +102,39 @@ class DonationsPage(QWidget):
 
         self.table = make_table(
             [
-                "ID",
-                "Date",
-                "Donor",
-                "Collected by",
-                "Pledged",
-                "Paid",
-                "Remaining",
-                "Method",
-                "Status",
-                "Reference",
+                tr("col.id"),
+                tr("col.date"),
+                tr("col.donor"),
+                tr("col.collected_by"),
+                tr("col.pledged"),
+                tr("col.paid"),
+                tr("col.remaining"),
+                tr("col.method"),
+                tr("col.status"),
+                tr("col.reference"),
             ]
         )
         layout.addWidget(self.table)
 
         controls = QHBoxLayout()
-        pay = QPushButton("Record payment")
+        pay = QPushButton(tr("donations.record_payment"))
         pay.setObjectName("primaryButton")
-        pay.setToolTip("Apply a payment toward the outstanding pledged balance.")
+        pay.setToolTip(tr("donations.pay_tip"))
         pay.clicked.connect(self.record_payment)
-        history = QPushButton("Payment history")
+        history = QPushButton(tr("donations.payment_history"))
         history.setObjectName("ghostButton")
-        history.setToolTip("See each installment: date, method, received by…")
+        history.setToolTip(tr("donations.history_tip"))
         history.clicked.connect(self.view_payment_history)
-        by_collector = QPushButton("By collector…")
+        by_collector = QPushButton(tr("donations.by_collector"))
         by_collector.setObjectName("ghostButton")
-        by_collector.setToolTip(
-            "Search a staff user and see every donation they collected."
-        )
+        by_collector.setToolTip(tr("donations.collector_tip"))
         by_collector.clicked.connect(self.view_by_collector)
-        edit = QPushButton("Edit")
+        edit = QPushButton(tr("common.edit"))
         edit.clicked.connect(self.edit_donation)
-        remove = QPushButton("Delete")
+        remove = QPushButton(tr("common.delete"))
         remove.setObjectName("dangerButton")
         remove.clicked.connect(self.remove_donation)
-        refresh = QPushButton("Refresh")
+        refresh = QPushButton(tr("common.refresh"))
         refresh.clicked.connect(self.refresh)
         controls.addWidget(pay)
         controls.addWidget(history)
@@ -168,7 +160,7 @@ class DonationsPage(QWidget):
         current = self.collector_filter.currentData()
         self.collector_filter.blockSignals(True)
         self.collector_filter.clear()
-        self.collector_filter.addItem("All collectors", None)
+        self.collector_filter.addItem(tr("donations.all_collectors"), None)
         for user in list_collector_choices():
             label = user.display_name
             if user.username and user.username.lower() != label.lower():
@@ -257,8 +249,8 @@ class DonationsPage(QWidget):
                     money(d.pledged_amount),
                     money(d.paid_amount),
                     money(d.remaining_amount),
-                    d.payment_method,
-                    d.status,
+                    td(d.payment_method),
+                    td(d.status),
                     d.reference or "",
                 )
                 for d in visible
@@ -267,22 +259,26 @@ class DonationsPage(QWidget):
         total = len(self._rows)
         shown = len(visible)
         if self.project_id is None:
-            self.result_label.setText("Select a project first")
+            self.result_label.setText(tr("common.no_project_body"))
         elif shown == total:
-            self.result_label.setText(f"{total} donation(s)")
+            self.result_label.setText(tr("donations.count", count=total))
         else:
-            self.result_label.setText(f"Showing {shown} of {total} donation(s)")
+            self.result_label.setText(
+                tr("donations.showing", shown=shown, total=total)
+            )
 
     def add_donation(self):
         if self.project_id is None:
-            QMessageBox.information(self, "No project", "Open a project first.")
+            QMessageBox.information(
+                self, tr("common.no_project_title"), tr("common.no_project_body")
+            )
             return
         donors = list_all_donors()
         if not donors:
             QMessageBox.information(
                 self,
-                "Setup required",
-                "Add at least one donor first (Donors → Add donor).",
+                tr("donations.setup_title"),
+                tr("donations.setup_body"),
             )
             return
         dialog = DonationDialog(self, donors=donors, project_id=self.project_id)
@@ -292,7 +288,7 @@ class DonationsPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def _selected_donation(self):
         donation_id = selected_id(self.table)
@@ -305,7 +301,9 @@ class DonationsPage(QWidget):
 
         donation = self._selected_donation()
         if donation is None:
-            QMessageBox.information(self, "Select donation", "Select a donation first.")
+            QMessageBox.information(
+                self, tr("donations.select_title"), tr("donations.select_body")
+            )
             return
         PaymentHistoryDialog(self, donation_id=donation.id).exec()
 
@@ -315,14 +313,16 @@ class DonationsPage(QWidget):
     def record_payment(self):
         donation = self._selected_donation()
         if donation is None:
-            QMessageBox.information(self, "Select donation", "Select a donation first.")
+            QMessageBox.information(
+                self, tr("donations.select_title"), tr("donations.select_body")
+            )
             return
         remaining = donation.remaining_amount
         if remaining <= 0:
             QMessageBox.information(
                 self,
-                "Nothing outstanding",
-                "This donation is already fully paid.",
+                tr("donations.nothing_title"),
+                tr("donations.nothing_body"),
             )
             return
         donors = list_all_donors()
@@ -339,12 +339,14 @@ class DonationsPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def edit_donation(self):
         donation = self._selected_donation()
         if donation is None:
-            QMessageBox.information(self, "Select donation", "Select a donation first.")
+            QMessageBox.information(
+                self, tr("donations.select_title"), tr("donations.select_body")
+            )
             return
         donors = list_all_donors()
         dialog = DonationDialog(
@@ -356,15 +358,19 @@ class DonationsPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def remove_donation(self):
         donation_id = selected_id(self.table)
         if donation_id is None:
-            QMessageBox.information(self, "Select donation", "Select a donation first.")
+            QMessageBox.information(
+                self, tr("donations.select_title"), tr("donations.select_body")
+            )
             return
         if (
-            QMessageBox.question(self, "Confirm deletion", "Delete this donation?")
+            QMessageBox.question(
+                self, tr("common.confirm_delete"), tr("donations.confirm_body")
+            )
             != QMessageBox.StandardButton.Yes
         ):
             return
@@ -373,4 +379,4 @@ class DonationsPage(QWidget):
             self.refresh()
             self._notify()
         except Exception as exc:
-            QMessageBox.critical(self, "Delete failed", str(exc))
+            QMessageBox.critical(self, tr("common.delete_failed"), str(exc))

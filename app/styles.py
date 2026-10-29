@@ -501,16 +501,16 @@ QLabel#loginHeroBrand {
 
 QLabel#loginHeroTagline {
     color: #FFFFFF;
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.25;
+    font-size: 28px;
+    font-weight: 750;
+    line-height: 1.22;
 }
 
 QLabel#loginHeroCaption {
-    color: rgba(255, 255, 255, 0.78);
-    font-size: 13px;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 15px;
     font-weight: 500;
-    padding-top: 8px;
+    padding-top: 10px;
 }
 
 QLabel#loginHeroCopyright {
@@ -595,6 +595,32 @@ QPushButton#loginForgotLink {
 
 QPushButton#loginForgotLink:hover {
     color: #0E493D;
+}
+
+QWidget#languageSwitch {
+    background: transparent;
+}
+
+QPushButton#langSwitchBtn {
+    background-color: #EEF3F9;
+    color: #35455C;
+    border: 1px solid #C5D0DE;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    min-width: 44px;
+}
+
+QPushButton#langSwitchBtn:hover {
+    border-color: #176B5B;
+    color: #145748;
+}
+
+QPushButton#langSwitchBtn:checked {
+    background-color: #176B5B;
+    color: #FFFFFF;
+    border-color: #176B5B;
 }
 
 QLabel#loginInstallId {
@@ -860,6 +886,23 @@ QLabel#statusCopyright,
 QPushButton#loginForgotLink {{
     color: #E2E8F0;
     background: transparent;
+}}
+
+QPushButton#langSwitchBtn {{
+    background-color: #1E2D45;
+    color: #E2E8F0;
+    border: 1px solid #475569;
+}}
+
+QPushButton#langSwitchBtn:hover {{
+    border-color: {a};
+    color: #FFFFFF;
+}}
+
+QPushButton#langSwitchBtn:checked {{
+    background-color: {a};
+    color: #FFFFFF;
+    border-color: {a};
 }}
 
 QLabel#pageTitle,

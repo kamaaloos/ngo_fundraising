@@ -13,12 +13,13 @@ from PySide6.QtWidgets import (
 )
 
 from app.db.models import USER_ROLES
+from app.i18n import td, tr
 
 
 class UserDialog(QDialog):
     def __init__(self, parent=None, user=None, projects=None):
         super().__init__(parent)
-        self.setWindowTitle("User account")
+        self.setWindowTitle(tr("dialog.user_title"))
         self.setMinimumWidth(460)
         self.setMinimumHeight(420)
         projects = projects or []
@@ -30,20 +31,23 @@ class UserDialog(QDialog):
         self.password = QLineEdit()
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         self.password.setPlaceholderText(
-            "Leave blank to keep current" if self._editing else "Required"
+            tr("dialog.user.password_keep")
+            if self._editing
+            else tr("dialog.user.password_required")
         )
         self.role = QComboBox()
-        self.role.addItems(list(USER_ROLES))
-        self.is_active = QCheckBox("Active account")
+        for role in USER_ROLES:
+            self.role.addItem(td(role), role)
+        self.is_active = QCheckBox(tr("dialog.user.active"))
         self.is_active.setChecked(True)
 
-        layout.addRow("Username *", self.username)
-        layout.addRow("Full name", self.full_name)
-        layout.addRow("Password", self.password)
-        layout.addRow("Role", self.role)
+        layout.addRow(tr("dialog.user.username"), self.username)
+        layout.addRow(tr("dialog.user.full_name"), self.full_name)
+        layout.addRow(tr("dialog.user.password"), self.password)
+        layout.addRow(tr("dialog.user.role"), self.role)
         layout.addRow("", self.is_active)
 
-        layout.addRow(QLabel("Assigned projects (for users):"))
+        layout.addRow(QLabel(tr("dialog.user.assigned")))
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setMinimumHeight(140)
@@ -60,12 +64,16 @@ class UserDialog(QDialog):
         scroll.setWidget(host)
         layout.addRow(scroll)
 
-        self.role.currentTextChanged.connect(self._on_role_changed)
-        self._on_role_changed(self.role.currentText())
+        self.role.currentIndexChanged.connect(self._on_role_changed)
+        self._on_role_changed()
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Save
             | QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.button(QDialogButtonBox.StandardButton.Save).setText(tr("common.save"))
+        buttons.button(QDialogButtonBox.StandardButton.Cancel).setText(
+            tr("common.cancel")
         )
         buttons.accepted.connect(self.validate_and_accept)
         buttons.rejected.connect(self.reject)
@@ -74,26 +82,32 @@ class UserDialog(QDialog):
         if user:
             self.username.setText(user.username)
             self.full_name.setText(user.full_name or "")
-            self.role.setCurrentText(user.role)
+            role_idx = self.role.findData(user.role)
+            if role_idx >= 0:
+                self.role.setCurrentIndex(role_idx)
             self.is_active.setChecked(bool(user.is_active))
 
-    def _on_role_changed(self, role: str):
-        enabled = role != "admin"
+    def _on_role_changed(self, *_):
+        enabled = self.role.currentData() != "admin"
         for check in self.project_checks.values():
             check.setEnabled(enabled)
 
     def validate_and_accept(self):
         if not self.username.text().strip():
-            QMessageBox.warning(self, "Validation", "Username is required.")
+            QMessageBox.warning(
+                self, tr("dialog.validation"), tr("dialog.user.err_username")
+            )
             return
         if not self._editing and not self.password.text():
-            QMessageBox.warning(self, "Validation", "Password is required for new users.")
+            QMessageBox.warning(
+                self, tr("dialog.validation"), tr("dialog.user.err_password")
+            )
             return
-        if self.role.currentText() == "user" and not self.selected_project_ids():
+        if self.role.currentData() == "user" and not self.selected_project_ids():
             QMessageBox.warning(
                 self,
-                "Validation",
-                "Assign at least one project to a non-admin user.",
+                tr("dialog.validation"),
+                tr("dialog.user.err_projects"),
             )
             return
         self.accept()
@@ -105,7 +119,7 @@ class UserDialog(QDialog):
         data = {
             "username": self.username.text().strip(),
             "full_name": self.full_name.text().strip(),
-            "role": self.role.currentText(),
+            "role": self.role.currentData() or self.role.currentText(),
             "is_active": self.is_active.isChecked(),
         }
         if self.password.text():

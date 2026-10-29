@@ -26,6 +26,7 @@ from app.i18n import apply_language_to_app
 from app.licensing import get_license_status
 from app.main_window import MainWindow
 from app.settings_store import load_settings
+from app.splash import show_splash
 from app.styles import build_stylesheet
 from app.support_identity import ensure_install_id
 
@@ -52,6 +53,9 @@ def main():
     # Keep False only while a session can return to login; always quit() explicitly.
     app.setQuitOnLastWindowClosed(False)
 
+    # Large branded splash while DB / license / login prepare (not a tiny popup).
+    splash = show_splash(app)
+
     # Windows needs a timer tick so Ctrl+C can reach the Qt loop.
     signal.signal(signal.SIGINT, lambda *_: app.quit())
     _sigint_timer = QTimer()
@@ -62,6 +66,7 @@ def main():
         init_db()
         ensure_install_id()
     except (SQLAlchemyError, OSError) as exc:
+        splash.close()
         QMessageBox.critical(
             None,
             "Startup error",
@@ -70,11 +75,22 @@ def main():
         return 1
 
     if not ensure_license_or_exit(app):
+        splash.close()
         return 1
 
-    state = {"window": None, "login": None}
+    state = {"window": None, "login": None, "splash": splash}
+
+    def close_splash():
+        sp = state.get("splash")
+        if sp is not None:
+            try:
+                sp.close()
+            except Exception:
+                pass
+            state["splash"] = None
 
     def shutdown():
+        close_splash()
         login = state.get("login")
         if login is not None:
             try:
@@ -91,12 +107,14 @@ def main():
             return
 
         if not get_license_status().valid:
+            close_splash()
             if not ensure_license_or_exit(app):
                 shutdown()
                 return
 
         login = LoginDialog()
         state["login"] = login
+        close_splash()
         result = login.exec()
         state["login"] = None
         try:
@@ -137,6 +155,11 @@ def main():
                 ):
                     break
 
+        # Bridge the blank pause between login closing and the heavy main UI build.
+        loading = show_splash(app)
+        state["splash"] = loading
+        app.processEvents()
+
         window = MainWindow()
         window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         state["window"] = window
@@ -150,6 +173,13 @@ def main():
 
         window.session_ended.connect(on_session_ended)
         window.show()
+        window.raise_()
+        window.activateWindow()
+        try:
+            loading.finish(window)
+        except Exception:
+            loading.close()
+        state["splash"] = None
 
     # Start login AFTER the event loop is running (fixes hang on first close).
     QTimer.singleShot(0, start_login)

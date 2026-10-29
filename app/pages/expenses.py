@@ -40,7 +40,7 @@ class ExpensesPage(QWidget):
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()
-        add = QPushButton("+ Add expense")
+        add = QPushButton(tr("expenses.add"))
         add.setObjectName("primaryButton")
         add.clicked.connect(self.add_expense)
         top.addWidget(add)
@@ -48,42 +48,49 @@ class ExpensesPage(QWidget):
 
         filters = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Search title, category, notes, amount…")
+        self.search.setPlaceholderText(tr("expenses.search_ph"))
         self.search.textChanged.connect(self._on_search_changed)
         filters.addWidget(self.search, 1)
 
-        filters.addWidget(QLabel("Sort by"))
+        filters.addWidget(QLabel(tr("expenses.sort_by")))
         self.sort_combo = QComboBox()
-        for label, key in (
-            ("Date · newest", "date_desc"),
-            ("Date · oldest", "date_asc"),
-            ("Title A–Z", "title_asc"),
-            ("Title Z–A", "title_desc"),
-            ("Category A–Z", "category_asc"),
-            ("Amount · high–low", "amount_desc"),
-            ("Amount · low–high", "amount_asc"),
+        for key, sort_key in (
+            ("expenses.sort.date_desc", "date_desc"),
+            ("expenses.sort.date_asc", "date_asc"),
+            ("expenses.sort.title_asc", "title_asc"),
+            ("expenses.sort.title_desc", "title_desc"),
+            ("expenses.sort.category_asc", "category_asc"),
+            ("expenses.sort.amount_desc", "amount_desc"),
+            ("expenses.sort.amount_asc", "amount_asc"),
         ):
-            self.sort_combo.addItem(label, key)
+            self.sort_combo.addItem(tr(key), sort_key)
         self.sort_combo.currentIndexChanged.connect(self._apply_view)
         filters.addWidget(self.sort_combo)
         layout.addLayout(filters)
 
-        self.summary = QLabel("Total expenses: 0.00")
+        self.summary = QLabel("")
         self.summary.setObjectName("muted")
         layout.addWidget(self.summary)
 
         self.table = make_table(
-            ["ID", "Date", "Title", "Category", "Amount", "Notes"]
+            [
+                tr("col.id"),
+                tr("col.date"),
+                tr("col.title"),
+                tr("col.category"),
+                tr("col.amount"),
+                tr("col.notes"),
+            ]
         )
         layout.addWidget(self.table)
 
         controls = QHBoxLayout()
-        edit = QPushButton("Edit")
+        edit = QPushButton(tr("common.edit"))
         edit.clicked.connect(self.edit_expense)
-        remove = QPushButton("Delete")
+        remove = QPushButton(tr("common.delete"))
         remove.setObjectName("dangerButton")
         remove.clicked.connect(self.remove_expense)
-        refresh = QPushButton("Refresh")
+        refresh = QPushButton(tr("common.refresh"))
         refresh.clicked.connect(self.refresh)
         controls.addWidget(edit)
         controls.addWidget(remove)
@@ -164,20 +171,27 @@ class ExpensesPage(QWidget):
         total = len(self._rows)
         shown = len(visible)
         if self.project_id is None:
-            self.summary.setText("Select a project first")
+            self.summary.setText(tr("common.no_project_body"))
         elif shown == total:
             self.summary.setText(
-                f"{total} expense(s) · Total {money(total_all)}"
+                tr("expenses.summary", count=total, total=money(total_all))
             )
         else:
             self.summary.setText(
-                f"Showing {shown} of {total} · Filtered total {money(total_visible)} "
-                f"· Full total {money(total_all)}"
+                tr(
+                    "expenses.summary_filtered",
+                    shown=shown,
+                    total=total,
+                    filtered=money(total_visible),
+                    full=money(total_all),
+                )
             )
 
     def add_expense(self):
         if self.project_id is None:
-            QMessageBox.information(self, "No project", "Open a project first.")
+            QMessageBox.information(
+                self, tr("common.no_project_title"), tr("common.no_project_body")
+            )
             return
         dialog = ExpenseDialog(self, project_id=self.project_id)
         if dialog.exec():
@@ -186,12 +200,14 @@ class ExpensesPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def edit_expense(self):
         expense_id = selected_id(self.table)
         if expense_id is None:
-            QMessageBox.information(self, "Select expense", "Select an expense first.")
+            QMessageBox.information(
+                self, tr("expenses.select_title"), tr("expenses.select_body")
+            )
             return
         expense = next((e for e in self._rows if e.id == expense_id), None)
         if expense is None:
@@ -203,15 +219,19 @@ class ExpensesPage(QWidget):
                 self.refresh()
                 self._notify()
             except Exception as exc:
-                QMessageBox.critical(self, "Save failed", str(exc))
+                QMessageBox.critical(self, tr("common.save_failed"), str(exc))
 
     def remove_expense(self):
         expense_id = selected_id(self.table)
         if expense_id is None:
-            QMessageBox.information(self, "Select expense", "Select an expense first.")
+            QMessageBox.information(
+                self, tr("expenses.select_title"), tr("expenses.select_body")
+            )
             return
         if (
-            QMessageBox.question(self, "Confirm deletion", "Delete this expense?")
+            QMessageBox.question(
+                self, tr("common.confirm_delete"), tr("expenses.confirm_body")
+            )
             != QMessageBox.StandardButton.Yes
         ):
             return
@@ -220,4 +240,4 @@ class ExpensesPage(QWidget):
             self.refresh()
             self._notify()
         except Exception as exc:
-            QMessageBox.critical(self, "Delete failed", str(exc))
+            QMessageBox.critical(self, tr("common.delete_failed"), str(exc))

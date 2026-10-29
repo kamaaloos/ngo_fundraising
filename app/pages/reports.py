@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 
 from app.auth.session import current_session
 from app.db.repository import portfolio_report_stats, project_report_stats
-from app.i18n import tr
+from app.i18n import td, tr
 from app.io.report_print import export_report_pdf, print_report
 from app.utils import money
 from app.widgets.chart_hover import enable_bar_hover, enable_line_hover
@@ -108,46 +108,61 @@ class ReportsPage(QWidget):
         top.addWidget(title)
         top.addStretch()
 
-        self.scope_label = QLabel("View")
+        self.scope_label = QLabel(tr("reports.view"))
         self.scope_combo = QComboBox()
-        self.scope_combo.addItem("Overall (all projects)", "overall")
-        self.scope_combo.addItem("This project only", "project")
+        self.scope_combo.addItem(tr("reports.overall"), "overall")
+        self.scope_combo.addItem(tr("reports.this_project"), "project")
         self.scope_combo.currentIndexChanged.connect(self.refresh)
         top.addWidget(self.scope_label)
         top.addWidget(self.scope_combo)
 
-        refresh = QPushButton("Refresh charts")
+        refresh = QPushButton(tr("reports.refresh"))
         refresh.clicked.connect(self.refresh)
         top.addWidget(refresh)
 
-        self.print_btn = QPushButton("Print…")
+        self.print_btn = QPushButton(tr("reports.print"))
         self.print_btn.setObjectName("ghostButton")
         self.print_btn.setToolTip("Print the current report summary and charts")
         self.print_btn.clicked.connect(self.print_current_report)
         top.addWidget(self.print_btn)
 
-        self.pdf_btn = QPushButton("Save PDF")
+        self.pdf_btn = QPushButton(tr("reports.save_pdf"))
         self.pdf_btn.setObjectName("primaryButton")
         self.pdf_btn.setToolTip("Save summary + all charts as a PDF file")
         self.pdf_btn.clicked.connect(self.save_current_report_pdf)
         top.addWidget(self.pdf_btn)
         layout.addLayout(top)
 
-        self.subtitle = QLabel("Graphical fundraising insights.")
+        self.subtitle = QLabel(tr("reports.subtitle"))
         self.subtitle.setObjectName("muted")
         self.subtitle.setWordWrap(True)
         layout.addWidget(self.subtitle)
 
         cards = QHBoxLayout()
         cards.setSpacing(14)
-        self.card_target = StatCard("TARGET", "0.00", "Fundraising goal", accent="blue")
-        self.card_raised = StatCard("RAISED", "0.00", "Paid amount", accent="teal")
-        self.card_pledged = StatCard("PLEDGED", "0.00", "Committed amount", accent="violet")
+        self.card_target = StatCard(
+            tr("card.target"), "0.00", tr("card.target_hint"), accent="blue"
+        )
+        self.card_raised = StatCard(
+            tr("card.raised"), "0.00", tr("card.raised_paid_hint"), accent="teal"
+        )
+        self.card_pledged = StatCard(
+            tr("card.pledged"),
+            "0.00",
+            tr("card.pledged_committed_hint"),
+            accent="violet",
+        )
         self.card_outstanding = StatCard(
-            "OUTSTANDING", "0.00", "Still owed by donors", accent="amber"
+            tr("card.outstanding"),
+            "0.00",
+            tr("card.outstanding_owed_hint"),
+            accent="amber",
         )
         self.card_expenses = StatCard(
-            "EXPENSES", "0.00", "Project spend", accent="rose"
+            tr("card.expenses"),
+            "0.00",
+            tr("card.expenses_project_hint"),
+            accent="rose",
         )
         for card in (
             self.card_target,
@@ -307,28 +322,57 @@ class ReportsPage(QWidget):
 
         outstanding = stats["total_outstanding"]
         net = stats["total_raised"] - stats["total_expenses"]
-        subtitle = (
-            f"Overall portfolio · {stats['project_count']} project(s) · "
-            f"{stats['donor_count']} donor(s) · Net {money(net)} · "
-            f"Charts colour-code the top projects by funds raised"
+        subtitle = tr(
+            "reports.subtitle_overall",
+            projects=stats["project_count"],
+            donors=stats["donor_count"],
+            net=money(net),
         )
         self.subtitle.setText(subtitle)
-        self.card_target.set_value(money(stats["total_target"]), "All project goals")
-        self.card_raised.set_value(money(stats["total_raised"]), "Paid across projects")
-        self.card_pledged.set_value(money(stats["total_pledged"]), "Committed total")
-        self.card_outstanding.set_value(
-            money(outstanding), "Still owed by donors"
+        self.card_target.set_value(
+            money(stats["total_target"]), tr("reports.card_target_all")
         )
-        self.card_expenses.set_value(money(stats["total_expenses"]), "All project spend")
+        self.card_raised.set_value(
+            money(stats["total_raised"]), tr("reports.card_raised_all")
+        )
+        self.card_pledged.set_value(
+            money(stats["total_pledged"]), tr("reports.card_pledged_all")
+        )
+        self.card_outstanding.set_value(
+            money(outstanding), tr("card.outstanding_owed_hint")
+        )
+        self.card_expenses.set_value(
+            money(stats["total_expenses"]), tr("reports.card_expenses_all")
+        )
         self._set_report_snapshot(
             "NGO Fundraising — Overall report",
             subtitle,
             [
-                ("TARGET", money(stats["total_target"]), "All project goals"),
-                ("RAISED", money(stats["total_raised"]), "Paid across projects"),
-                ("PLEDGED", money(stats["total_pledged"]), "Committed total"),
-                ("OUTSTANDING", money(outstanding), "Still owed by donors"),
-                ("EXPENSES", money(stats["total_expenses"]), "All project spend"),
+                (
+                    tr("card.target"),
+                    money(stats["total_target"]),
+                    tr("reports.card_target_all"),
+                ),
+                (
+                    tr("card.raised"),
+                    money(stats["total_raised"]),
+                    tr("reports.card_raised_all"),
+                ),
+                (
+                    tr("card.pledged"),
+                    money(stats["total_pledged"]),
+                    tr("reports.card_pledged_all"),
+                ),
+                (
+                    tr("card.outstanding"),
+                    money(outstanding),
+                    tr("card.outstanding_owed_hint"),
+                ),
+                (
+                    tr("card.expenses"),
+                    money(stats["total_expenses"]),
+                    tr("reports.card_expenses_all"),
+                ),
             ],
         )
 
@@ -390,15 +434,13 @@ class ReportsPage(QWidget):
 
     def _refresh_project(self):
         if self.project_id is None:
-            self.subtitle.setText(
-                "Select a project, or switch View to Overall (admin)."
-            )
+            self.subtitle.setText(tr("reports.need_project"))
             self.card_target.set_value("0.00")
             self.card_raised.set_value("0.00")
             self.card_pledged.set_value("0.00")
             self.card_outstanding.set_value("0.00")
             self.card_expenses.set_value("0.00")
-            self._set_report_snapshot("Reports", self.subtitle.text(), [])
+            self._set_report_snapshot(tr("reports.title"), self.subtitle.text(), [])
             return
 
         try:
@@ -416,26 +458,48 @@ class ReportsPage(QWidget):
             outstanding = Decimal("0.00")
         net = raised - expenses
 
-        subtitle = (
-            f"{project.name} · Target {money(project.target_amount)} · "
-            f"{project.fundraising_status} · Net {money(net)} · "
-            f"Donors {stats['donor_count']} · Donations {stats['donation_count']}"
+        subtitle = tr(
+            "reports.subtitle_project",
+            name=project.name,
+            target=money(project.target_amount),
+            fund_status=td(project.fundraising_status),
+            net=money(net),
+            donors=stats["donor_count"],
+            donations=stats["donation_count"],
         )
         self.subtitle.setText(subtitle)
-        self.card_target.set_value(money(project.target_amount), "Fundraising goal")
-        self.card_raised.set_value(money(raised), "Paid amount")
-        self.card_pledged.set_value(money(pledged), "Committed amount")
-        self.card_outstanding.set_value(money(outstanding), "Still owed by donors")
-        self.card_expenses.set_value(money(expenses), "Project spend")
+        self.card_target.set_value(money(project.target_amount), tr("card.target_hint"))
+        self.card_raised.set_value(money(raised), tr("card.raised_paid_hint"))
+        self.card_pledged.set_value(money(pledged), tr("card.pledged_committed_hint"))
+        self.card_outstanding.set_value(
+            money(outstanding), tr("card.outstanding_owed_hint")
+        )
+        self.card_expenses.set_value(money(expenses), tr("card.expenses_project_hint"))
         self._set_report_snapshot(
             f"NGO Fundraising — Project report · {project.name}",
             subtitle,
             [
-                ("TARGET", money(project.target_amount), "Fundraising goal"),
-                ("RAISED", money(raised), "Paid amount"),
-                ("PLEDGED", money(pledged), "Committed amount"),
-                ("OUTSTANDING", money(outstanding), "Still owed by donors"),
-                ("EXPENSES", money(expenses), "Project spend"),
+                (
+                    tr("card.target"),
+                    money(project.target_amount),
+                    tr("card.target_hint"),
+                ),
+                (tr("card.raised"), money(raised), tr("card.raised_paid_hint")),
+                (
+                    tr("card.pledged"),
+                    money(pledged),
+                    tr("card.pledged_committed_hint"),
+                ),
+                (
+                    tr("card.outstanding"),
+                    money(outstanding),
+                    tr("card.outstanding_owed_hint"),
+                ),
+                (
+                    tr("card.expenses"),
+                    money(expenses),
+                    tr("card.expenses_project_hint"),
+                ),
             ],
         )
 
