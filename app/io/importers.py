@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from app.db.access import require_admin, require_project_access
-from app.db.models import PROJECT_STATUSES
+from app.db.models import EXPENSE_CATEGORIES, PROJECT_STATUSES
 from app.db.repository import normalize_project_status
 from app.db.repository import (
     find_or_create_donor,
@@ -14,6 +14,7 @@ from app.db.repository import (
     list_projects,
     save_donation,
     save_donor,
+    save_expense,
     save_project,
 )
 
@@ -107,6 +108,14 @@ DONATION_ALIASES = {
     "method": ("method", "payment_method", "payment"),
     "date": ("date", "donation_date", "pledged_date"),
     "reference": ("reference", "ref", "receipt"),
+}
+
+EXPENSE_ALIASES = {
+    "title": ("title", "name", "expense", "expense_title", "item"),
+    "category": ("category", "type", "expense_category"),
+    "amount": ("amount", "cost", "value", "expense_amount"),
+    "date": ("date", "expense_date", "spent_on"),
+    "notes": ("notes", "note", "remark", "remarks", "description"),
 }
 
 
@@ -384,3 +393,57 @@ def import_projects_with_donors_from_file(
             warnings.append(f"Row {index}: {exc}")
 
     return projects_created, donors_created, donations_created, warnings
+
+
+def import_expenses_from_file(
+    path: str | Path,
+    project_id: int,
+) -> tuple[int, list[str]]:
+    """
+    Import expenses into a project.
+
+    Columns: title*, category, amount*, date/expense_date, notes
+    Categories: Operations, Materials, Travel, Marketing, Staff, Utilities, Other
+    """
+    require_project_access(project_id)
+    project = get_project(project_id)
+    if project is None:
+        raise ValueError("Project not found")
+
+    rows = _read_rows(Path(path))
+    created = 0
+    warnings: list[str] = []
+    allowed = {c.lower(): c for c in EXPENSE_CATEGORIES}
+
+    for index, row in enumerate(rows, start=2):
+        title = _pick(row, EXPENSE_ALIASES["title"])
+        if not title:
+            warnings.append(f"Row {index}: skipped (missing title)")
+            continue
+        amount_raw = _pick(row, EXPENSE_ALIASES["amount"])
+        if not amount_raw:
+            warnings.append(f"Row {index}: skipped (missing amount)")
+            continue
+        try:
+            amount = _parse_money(amount_raw, "0")
+            if amount <= 0:
+                warnings.append(f"Row {index}: skipped (amount must be > 0)")
+                continue
+            category_raw = _pick(row, EXPENSE_ALIASES["category"]) or "Other"
+            category = allowed.get(category_raw.strip().lower(), "Other")
+            save_expense(
+                None,
+                {
+                    "project_id": project_id,
+                    "title": title,
+                    "category": category,
+                    "amount": amount,
+                    "expense_date": _parse_date(_pick(row, EXPENSE_ALIASES["date"])),
+                    "notes": _pick(row, EXPENSE_ALIASES["notes"]),
+                },
+            )
+            created += 1
+        except Exception as exc:
+            warnings.append(f"Row {index}: {exc}")
+
+    return created, warnings

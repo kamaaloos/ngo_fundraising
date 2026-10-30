@@ -3,6 +3,7 @@ from decimal import Decimal
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import (
     QComboBox,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -15,6 +16,8 @@ from PySide6.QtWidgets import (
 from app.db.repository import delete_expense, list_expenses, save_expense
 from app.dialogs.expense_dialog import ExpenseDialog
 from app.i18n import tr
+from app.io.importers import import_expenses_from_file
+from app.samples import customer_samples_dir, open_sample_templates
 from app.utils import money
 from app.widgets.table_page import fill_table, make_table, selected_id
 
@@ -40,9 +43,17 @@ class ExpensesPage(QWidget):
         title.setObjectName("pageTitle")
         top.addWidget(title)
         top.addStretch()
+        self.import_btn = QPushButton(tr("expenses.import"))
+        self.import_btn.setObjectName("ghostButton")
+        self.import_btn.clicked.connect(self.import_expenses)
+        self.samples_btn = QPushButton(tr("samples.open"))
+        self.samples_btn.setObjectName("ghostButton")
+        self.samples_btn.clicked.connect(lambda: open_sample_templates(self))
         add = QPushButton(tr("expenses.add"))
         add.setObjectName("primaryButton")
         add.clicked.connect(self.add_expense)
+        top.addWidget(self.import_btn)
+        top.addWidget(self.samples_btn)
         top.addWidget(add)
         layout.addLayout(top)
 
@@ -186,6 +197,35 @@ class ExpensesPage(QWidget):
                     full=money(total_all),
                 )
             )
+
+    def import_expenses(self):
+        if self.project_id is None:
+            QMessageBox.information(
+                self, tr("common.no_project_title"), tr("common.no_project_body")
+            )
+            return
+        start = str(customer_samples_dir()) if customer_samples_dir().exists() else ""
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            tr("expenses.import"),
+            start,
+            "Spreadsheets (*.csv *.xlsx);;CSV (*.csv);;Excel (*.xlsx)",
+        )
+        if not path:
+            return
+        try:
+            created, warnings = import_expenses_from_file(path, self.project_id)
+        except Exception as exc:
+            QMessageBox.critical(self, tr("expenses.import_failed"), str(exc))
+            return
+        body = tr("expenses.imported_count", count=created)
+        if warnings:
+            body += "\n\n" + "\n".join(warnings[:12])
+            if len(warnings) > 12:
+                body += f"\n… (+{len(warnings) - 12})"
+        QMessageBox.information(self, tr("expenses.import_complete"), body)
+        self.refresh()
+        self._notify()
 
     def add_expense(self):
         if self.project_id is None:

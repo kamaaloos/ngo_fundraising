@@ -23,6 +23,7 @@ from app.io.importers import (
     import_donors_from_file,
     import_donors_linked_to_project,
 )
+from app.samples import customer_samples_dir, open_sample_templates
 from app.widgets.donor_list_item import DonorListItem
 
 
@@ -54,6 +55,9 @@ class DonorsPage(QWidget):
         self.link_import_btn = QPushButton(tr("donors.import_link"))
         self.link_import_btn.setObjectName("ghostButton")
         self.link_import_btn.clicked.connect(self.import_linked_to_project)
+        self.samples_btn = QPushButton(tr("samples.open"))
+        self.samples_btn.setObjectName("ghostButton")
+        self.samples_btn.clicked.connect(lambda: open_sample_templates(self))
         export_xls = QPushButton(tr("donors.export_excel"))
         export_xls.setObjectName("ghostButton")
         export_xls.clicked.connect(self.export_excel)
@@ -65,6 +69,7 @@ class DonorsPage(QWidget):
         add.clicked.connect(self.add_donor)
         top.addWidget(self.import_btn)
         top.addWidget(self.link_import_btn)
+        top.addWidget(self.samples_btn)
         top.addWidget(export_xls)
         top.addWidget(export_pdf)
         top.addWidget(add)
@@ -366,10 +371,11 @@ class DonorsPage(QWidget):
         QMessageBox.information(self, title, message)
 
     def import_donors(self):
+        start = str(customer_samples_dir()) if customer_samples_dir().exists() else ""
         path, _ = QFileDialog.getOpenFileName(
             self,
             tr("donors.import"),
-            "",
+            start,
             "Spreadsheets (*.csv *.xlsx);;CSV (*.csv);;Excel (*.xlsx)",
         )
         if not path:
@@ -395,10 +401,11 @@ class DonorsPage(QWidget):
                 tr("donors.import_link_body"),
             )
             return
+        start = str(customer_samples_dir()) if customer_samples_dir().exists() else ""
         path, _ = QFileDialog.getOpenFileName(
             self,
             tr("donors.import_link_title"),
-            "",
+            start,
             "Spreadsheets (*.csv *.xlsx);;CSV (*.csv);;Excel (*.xlsx)",
         )
         if not path:

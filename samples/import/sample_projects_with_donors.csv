@@ -1,0 +1,5 @@
+﻿project_name,target,status,description,donor_name,email,phone,pledged,paid,method,date,reference
+Clean Water Wells,50000,Active,Community wells,Amina Hassan,amina.hassan@example.com,+252-61-111-1001,1000,500,Mobile Money,2026-01-15,CW-001
+Clean Water Wells,50000,Active,Community wells,Omar Yusuf,omar.yusuf@example.com,+252-61-111-1002,2500,2500,Bank Transfer,2026-01-20,CW-002
+Ramadan Food Baskets,25000,Active,Food parcels,Fatima Ali,fatima.ali@example.com,+252-61-111-1003,750,0,Cash,2026-02-01,RF-001
+Ramadan Food Baskets,25000,Active,Food parcels,Maryan Abdi,maryan.abdi@example.com,+252-61-111-1005,300,300,Cash,2026-02-05,RF-002

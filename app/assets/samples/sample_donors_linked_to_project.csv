@@ -1,0 +1,5 @@
+﻿name,email,phone,address,notes,pledged,paid,method,date,reference
+Amina Hassan,amina.hassan@example.com,+252-61-111-1001,Mogadishu,First gift,1000,500,Mobile Money,2026-01-15,REF-A001
+Omar Yusuf,omar.yusuf@example.com,+252-61-111-1002,Hargeisa,,2500,2500,Bank Transfer,2026-01-20,REF-O002
+Fatima Ali,fatima.ali@example.com,+252-61-111-1003,Nairobi,Pledge only,750,0,Cash,2026-02-01,
+Ibrahim Noor,ibrahim.noor@example.com,+252-61-111-1004,Djibouti,,1200,400,Cash,2026-02-10,REF-I004
