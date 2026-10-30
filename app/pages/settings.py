@@ -241,8 +241,12 @@ class SettingsPage(QWidget):
         self.restore_backup_btn = QPushButton(tr("settings.restore_backup"))
         self.restore_backup_btn.setObjectName("ghostButton")
         self.restore_backup_btn.clicked.connect(self._restore_backup)
+        self.share_guide_btn = QPushButton(tr("settings.share_guide"))
+        self.share_guide_btn.setObjectName("ghostButton")
+        self.share_guide_btn.clicked.connect(self._open_share_guide)
         backup_row.addWidget(self.export_backup_btn)
         backup_row.addWidget(self.restore_backup_btn)
+        backup_row.addWidget(self.share_guide_btn)
         backup_row.addStretch()
         backup_layout.addLayout(backup_row)
         layout.addWidget(backup_card)
@@ -393,6 +397,11 @@ class SettingsPage(QWidget):
         settings = load_settings()
         settings.backup_on_exit = bool(checked)
         save_settings(settings)
+
+    def _open_share_guide(self):
+        from app.guides import open_share_data_guide
+
+        open_share_data_guide(self)
 
     def _export_backup(self):
         if not current_session.is_admin:

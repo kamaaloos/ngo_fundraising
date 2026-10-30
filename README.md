@@ -180,6 +180,10 @@ This version is a **single-PC** SQLite app. There is no multi-workstation shared
 replication, or concurrent editing across machines. Copying the `.sqlite3` file to another
 PC is a manual migrate/restore, not live sync. Plan backups accordingly.
 
+**Customer guide (PC ↔ laptop):** see
+[`docs/Share-data-between-PC-and-laptop.md`](docs/Share-data-between-PC-and-laptop.md).
+In the app: **Settings → Data backup → PC ↔ laptop guide…**
+
 ### Backups
 
 - Admins: **Export backup…** / **Restore from backup…** under Settings → Data backup
